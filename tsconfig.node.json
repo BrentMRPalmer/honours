@@ -19,10 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": [
-    "vite.*.config.ts",
-    "src/main.ts",
-    "src/preload.ts",
-    "forge.env.d.ts"
-  ]
+  "include": ["vite.*.config.ts", "./src/electron"]
 }

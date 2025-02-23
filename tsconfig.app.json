@@ -22,8 +22,9 @@
     "noUncheckedSideEffectImports": true,
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/renderer/*"]
     }
   },
-  "exclude": ["vite.*.config.ts", "src/main.ts", "src/preload.ts"]
+  "include": ["./src/renderer"],
+  "exclude": ["./vite.*.config.ts", "./src/electron"]
 }
