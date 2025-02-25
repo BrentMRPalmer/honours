@@ -1,5 +1,9 @@
-import type { ConnectionConfig as PostgresqlConnectionConfig } from 'pg';
-import { Client as PostgresqlDatabase } from 'pg';
+import type {
+  Client as PostgresqlDatabase,
+  ConnectionConfig as PostgresqlConnectionConfig,
+} from 'pg';
+
+import { ConnectionTypes } from '@/shared/types';
 
 import { AbstractSqlConnection } from './abstract-sql-connection';
 
@@ -7,21 +11,15 @@ class PostgresqlConnection extends AbstractSqlConnection<
   PostgresqlDatabase,
   PostgresqlConnectionConfig
 > {
-  protected initDbDriver() {
-    return new PostgresqlDatabase({
-      database: 'postgres',
-      user: 'postgres',
-      password: 'mysecretpassword',
-      host: 'localhost',
-      port: 5432,
-    });
+  get connectionType(): ConnectionTypes {
+    return 'postgresql';
   }
 
-  async connect() {
+  protected async _connect() {
     return this.db.connect();
   }
 
-  async disconnect() {
+  protected async _disconnect() {
     return this.db.end();
   }
 

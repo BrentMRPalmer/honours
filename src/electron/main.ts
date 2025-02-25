@@ -1,8 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import started from 'electron-squirrel-startup';
 import path from 'path';
 
-import { userSettingsController } from './lib/user-settings';
+import controllers from '@/controllers';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -22,7 +22,6 @@ const createWindow = () => {
     titleBarStyle: 'hidden',
     ...titleBarWindowControls,
     webPreferences: {
-      sandbox: false,
       preload: path.join(__dirname, 'preload.js'),
     },
   });
@@ -36,10 +35,30 @@ const createWindow = () => {
     );
   }
 
-  // Register IPC controllers on first window creation
-  if (!app.isReady()) {
-    userSettingsController(app);
+  // Register IPC controllers
+  const registeredChannels: string[] = [];
+  for (const controllerName in controllers) {
+    const controller = controllers[controllerName as keyof typeof controllers];
+    const controllerMethods = Object.getOwnPropertyNames(
+      controller.prototype,
+    ).filter((method) => method !== 'constructor');
+
+    const controllerInstance = new controller();
+
+    for (const methodName of controllerMethods) {
+      const channelName = `${controllerName}:${methodName}`;
+      registeredChannels.push(channelName);
+
+      ipcMain.handle(channelName, (...args: unknown[]) => {
+        const method = Reflect.get(controllerInstance, methodName);
+        return Reflect.apply(method, controllerInstance, args);
+      });
+    }
   }
+
+  ipcMain.handle('registered-channels', () => {
+    return registeredChannels;
+  });
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();

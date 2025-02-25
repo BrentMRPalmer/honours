@@ -17,7 +17,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "paths": {
+      "@/*": ["./src/electron/*"],
+      "@/shared/*": ["./src/shared/*"]
+    }
   },
   "include": ["vite.*.config.ts", "./src/electron"]
 }
