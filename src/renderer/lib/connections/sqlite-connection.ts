@@ -4,13 +4,11 @@ import type { ConnectionTypes } from '@/shared/types';
 
 import { AbstractSqlConnection } from './abstract-sql-connection';
 
-interface SqliteConnectionConfig {
-  file: string;
-}
+type SqliteConnectionConfig = Omit<ISqlite.Config, 'driver'>;
 
 class SqliteConnection extends AbstractSqlConnection<
   SqliteDatabase,
-  Omit<ISqlite.Config, 'driver'>
+  SqliteConnectionConfig
 > {
   get connectionType(): ConnectionTypes {
     return 'sqlite';
