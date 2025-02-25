@@ -33,5 +33,3 @@ class SqliteConnection extends AbstractSqlConnection<
 }
 
 export { SqliteConnection };
-
-export type { SqliteConnectionConfig };

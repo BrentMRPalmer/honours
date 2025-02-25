@@ -33,5 +33,3 @@ class PostgresqlConnection extends AbstractSqlConnection<
 }
 
 export { PostgresqlConnection };
-
-export type { PostgresqlConnectionConfig };
