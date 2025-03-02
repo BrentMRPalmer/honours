@@ -1,37 +1,38 @@
 import { Portal } from '@radix-ui/react-portal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
-import {
-  ClockIcon,
-  FileClockIcon,
-  SheetIcon,
-  SquarePenIcon,
-  Table2Icon,
-} from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+// import { TableView } from '@/components/table-view';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { AbstractSqlConnection } from '@/lib/connections/abstract-sql-connection';
 import { cn } from '@/lib/utils';
-import type { Connection } from '@/types';
 
+import { QueryResultTable } from '../query-result-table';
 import { useConnectionViewContext } from './connection-view-provider';
 
-interface ConnectionViewSidebarProps {
-  connection: Connection;
-}
-
-function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
-  const { openTab } = useConnectionViewContext();
+function ConnectionViewSidebar() {
+  const { connection } = useConnectionViewContext();
+  const { tabManager } = useConnectionViewContext();
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [tables, setTables] = useState<string[]>([]);
 
   useLayoutEffect(() => {
     setIsVisible(ref.current?.offsetParent !== null);
   });
+
+  // Get tables from the current connection
+  useEffect(() => {
+    if (connection instanceof AbstractSqlConnection) {
+      connection.getTables().then(setTables);
+    }
+  }, [connection]);
 
   const portalContainer = document.getElementById(
     'connection-view-sidebar-tab-list',
@@ -39,7 +40,7 @@ function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
   if (portalContainer === null) return null;
 
   return (
-    <Tabs defaultValue='tables' ref={ref}>
+    <Tabs defaultValue='tables' className='h-full' ref={ref}>
       <Portal
         container={portalContainer}
         className={cn(
@@ -68,7 +69,7 @@ function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip disableHoverableContent>
+          {/* <Tooltip disableHoverableContent>
             <TooltipTrigger>
               <TabsTrigger
                 value='history'
@@ -86,11 +87,12 @@ function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
               Query history
             </TooltipContent>
           </Tooltip>
+          */}
 
           <Tooltip disableHoverableContent>
             <TooltipTrigger
               asChild
-              onClick={() => openTab('editor', <div>editor</div>)}
+              onClick={() => tabManager.createTab('editor', <div>editor</div>)}
             >
               <Button variant='ghost' size='icon' asChild>
                 <div>
@@ -105,11 +107,24 @@ function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
         </TabsList>
       </Portal>
 
-      <TabsContent value='tables' className='flex flex-col gap-2'>
-        {connection.tables.map((table) => (
+      <TabsContent
+        value='tables'
+        className='flex h-full flex-col gap-2 overflow-y-auto py-2'
+      >
+        {tables.map((table) => (
           <div
-            className='flex items-center gap-1'
-            onClick={() => openTab(table, <div>{table} table</div>)}
+            key={table}
+            className='hover:bg-primary/10 flex cursor-pointer items-center gap-1 rounded px-2 py-1'
+            onClick={() =>
+              tabManager.createTab(
+                table,
+                <QueryResultTable
+                  query={(
+                    connection as AbstractSqlConnection<object, unknown>
+                  ).getPaginatedTableData(table)}
+                />,
+              )
+            }
           >
             <SheetIcon size={16} className='min-w-fit' />
             <p className='truncate'>{table}</p>
@@ -117,9 +132,11 @@ function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
         ))}
       </TabsContent>
 
+      {/* Commented out history content for now
       <TabsContent value='history' className='flex flex-col gap-2'>
-        {connection.history.map((history) => (
+        {history.map((history) => (
           <div
+            key={history}
             className='flex items-center gap-1'
             onClick={() => openTab(history, <div>{history} history</div>)}
           >
@@ -128,10 +145,9 @@ function ConnectionViewSidebar({ connection }: ConnectionViewSidebarProps) {
           </div>
         ))}
       </TabsContent>
+      */}
     </Tabs>
   );
 }
 
 export { ConnectionViewSidebar };
-
-export type { ConnectionViewSidebarProps };

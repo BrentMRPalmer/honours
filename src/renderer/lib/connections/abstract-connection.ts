@@ -1,62 +1,69 @@
-import type { ConnectionTypes } from '@/shared/types';
+import type { ConnectionDrivers } from '@/shared/types';
 
-abstract class AbstractConnection<D, C> {
-  private id?: string;
-  protected config: C;
-  protected db: D;
-  abstract readonly connectionType: ConnectionTypes;
+abstract class AbstractConnection<D extends object, C> {
+  id: string;
+  name: string;
 
-  constructor(config: C) {
-    this.id = undefined;
-    this.config = config;
-    this.db = new Proxy<this>(this, {
-      get(target, property: string) {
-        return (...args: unknown[]) => {
-          return window.ConnectionProxy.forwardCall(
-            target.id as string,
-            property,
-            ...args,
-          );
-        };
+  protected _connectionOpen: boolean = false;
+  protected _config: C;
+  protected _db: D;
+  abstract readonly connectionDriver: ConnectionDrivers;
+
+  constructor(id: string, name: string, config: C) {
+    this.id = id;
+    this.name = name;
+
+    this._config = config;
+    this._db = new Proxy({} as D, {
+      get(_, property: string) {
+        return window.ConnectionProxy.forwardCall.bind(undefined, id, property);
       },
-    }) as unknown as D;
+    });
 
     return new Proxy<this>(this, {
-      get(target, p, receiver) {
-        const property = Reflect.get(target, p, receiver);
-        const isFunction = typeof property === 'function';
+      get(target, property, receiver) {
+        const member = Reflect.get(target, property, receiver);
+        const isFunction = typeof member === 'function';
 
         if (
-          target.id === undefined &&
-          isFunction &&
-          p !== 'createProxiedConnection'
+          property !== 'createProxiedConnection' &&
+          !target._connectionOpen &&
+          isFunction
         ) {
           throw new Error(
             'Proxy connection not established. Call `createProxiedConnection` to set it up.',
           );
         }
 
-        return property;
+        return member;
       },
     });
   }
 
   async createProxiedConnection() {
-    this.id = await window.ConnectionProxy.createConnection(
-      this.connectionType,
-      this.config,
+    if (this._connectionOpen) {
+      return;
+    }
+
+    await window.ConnectionProxy.createConnection(
+      this.id,
+      this.connectionDriver,
+      this._config,
     );
+    this._connectionOpen = true;
+
     await this._connect();
   }
 
   async deleteProxiedConnection() {
-    if (this.id === undefined) {
+    if (!this._connectionOpen) {
       return;
     }
 
     await this._disconnect();
+
     await window.ConnectionProxy.deleteConnection(this.id);
-    this.id = undefined;
+    this._connectionOpen = false;
   }
 
   protected abstract _connect(): Promise<void>;

@@ -1,34 +1,33 @@
 import type { IpcMainInvokeEvent as IpcEvent } from 'electron';
-import pg from 'pg';
 import { open } from 'sqlite';
 import sqlite from 'sqlite3';
-import { v4 as uuidv4 } from 'uuid';
 
-import type { ConnectionTypes } from '@/shared/types';
+import { AbstractController } from '@/controllers/abstract-controller';
+import type { ConnectionDrivers } from '@/shared/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-class ConnectionProxy {
+class ConnectionProxy extends AbstractController {
   openConnections = new Map<string, unknown>();
 
   async createConnection(
     _: IpcEvent,
-    connectionType: ConnectionTypes,
+    id: string,
+    connectionDriver: ConnectionDrivers,
     args: any,
   ) {
-    let connection: unknown;
+    if (this.openConnections.has(id)) {
+      return false;
+    }
 
-    switch (connectionType) {
+    let connection: unknown;
+    switch (connectionDriver) {
       case 'sqlite':
         connection = await open({ driver: sqlite.Database, ...args });
         break;
-      case 'postgresql':
-        connection = new pg.Client(args);
-        break;
     }
 
-    const id = uuidv4();
     this.openConnections.set(id, connection);
-    return id;
+    return true;
   }
 
   async deleteConnection(_: IpcEvent, id: string) {
@@ -52,5 +51,3 @@ class ConnectionProxy {
 }
 
 export { ConnectionProxy };
-
-export type { ConnectionTypes };

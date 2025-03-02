@@ -15,7 +15,7 @@ ipcRenderer.invoke('registered-channels').then((channels) => {
     if (!(controller in clients)) {
       clients[controller] = {};
     }
-    console.log(controller, method, channel);
+
     clients[controller][method] = (...args: unknown[]) => {
       return ipcRenderer.invoke(channel, ...args);
     };

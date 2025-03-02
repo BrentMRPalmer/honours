@@ -1,39 +1,26 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
 import { DatabaseIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import SortableList, { SortableItem } from 'react-easy-sort';
 
 import { ConnectionView } from '@/components/connection-view/connection-view';
-import { useActiveConnection } from '@/hooks/use-active-connection';
-import type { Connection } from '@/types';
-
-const CONNECTIONS: Connection[] = [
-  {
-    name: 'uozone db',
-    tables: ['professors', 'course_sections'],
-    history: ['prof query'],
-  },
-  {
-    name: 'spotify db',
-    tables: ['songs', 'artists'],
-    history: ['song query'],
-  },
-];
+import { useConnections } from '@/hooks/use-connections';
 
 function ConnectionList() {
-  const [openConnection, setOpenConnection] = useState(CONNECTIONS[0].name);
-  const { changeConnection } = useActiveConnection();
+  const { activeConnectionId, connections, changeConnection, getConnections } =
+    useConnections();
+
+  useEffect(() => {
+    getConnections();
+  }, [getConnections]);
 
   return (
     <Tabs
       className='flex h-full'
       orientation='vertical'
-      value={openConnection}
-      onValueChange={(value) => {
-        setOpenConnection(value);
-        changeConnection('hello').then(() => {
-          console.log('goodby');
-        });
+      value={activeConnectionId}
+      onValueChange={(connectionId: string) => {
+        changeConnection(connectionId);
       }}
     >
       <TabsList>
@@ -42,10 +29,10 @@ function ConnectionList() {
           lockAxis='y'
           className='flex min-w-20 flex-col gap-4'
         >
-          {CONNECTIONS.map((connection) => (
-            <SortableItem>
+          {connections.map((connection) => (
+            <SortableItem key={connection.id}>
               <TabsTrigger
-                value={connection.name}
+                value={connection.id}
                 className='text-2xs flex flex-col items-center gap-1'
               >
                 <DatabaseIcon size={25} strokeWidth={1} />
@@ -56,9 +43,10 @@ function ConnectionList() {
         </SortableList>
       </TabsList>
 
-      {CONNECTIONS.map((connection) => (
+      {connections.map((connection) => (
         <TabsContent
-          value={connection.name}
+          key={connection.id}
+          value={connection.id}
           className='w-full data-[state=inactive]:hidden'
           forceMount
         >

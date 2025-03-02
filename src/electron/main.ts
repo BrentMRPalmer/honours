@@ -17,8 +17,8 @@ const createWindow = () => {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 800,
     titleBarStyle: 'hidden',
     ...titleBarWindowControls,
     webPreferences: {
@@ -43,7 +43,7 @@ const createWindow = () => {
       controller.prototype,
     ).filter((method) => method !== 'constructor');
 
-    const controllerInstance = new controller();
+    const controllerInstance = new controller(app);
 
     for (const methodName of controllerMethods) {
       const channelName = `${controllerName}:${methodName}`;

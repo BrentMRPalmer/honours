@@ -1,6 +1,6 @@
 import type { Database as SqliteDatabase, ISqlite } from 'sqlite';
 
-import type { ConnectionTypes } from '@/shared/types';
+import type { ConnectionDrivers } from '@/shared/types';
 
 import { AbstractSqlConnection } from './abstract-sql-connection';
 
@@ -10,7 +10,7 @@ class SqliteConnection extends AbstractSqlConnection<
   SqliteDatabase,
   SqliteConnectionConfig
 > {
-  get connectionType(): ConnectionTypes {
+  get connectionDriver(): ConnectionDrivers {
     return 'sqlite';
   }
 
@@ -20,16 +20,23 @@ class SqliteConnection extends AbstractSqlConnection<
   }
 
   protected async _disconnect() {
-    await this.db.close();
+    await this._db.close();
   }
 
   async getTables() {
-    const rows = await this.db.all<{ name: string }[]>(
+    const rows = await this._db.all<{ name: string }[]>(
       "SELECT name FROM sqlite_master WHERE type='table'",
     );
 
     return rows.map(({ name }) => name);
   }
+
+  async executeQuery<T>(query: string) {
+    const rows = await this._db.all<Record<string, T>[]>(query);
+    return rows;
+  }
 }
 
 export { SqliteConnection };
+
+export type { SqliteConnectionConfig };
