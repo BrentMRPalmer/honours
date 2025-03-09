@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import started from 'electron-squirrel-startup';
 import path from 'path';
@@ -8,6 +9,8 @@ import controllers from '@/controllers';
 if (started) {
   app.quit();
 }
+
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const createWindow = () => {
   const titleBarWindowControls =

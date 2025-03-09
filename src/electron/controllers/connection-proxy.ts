@@ -1,32 +1,28 @@
+import SqliteDatabase from 'better-sqlite3';
 import type { IpcMainInvokeEvent as IpcEvent } from 'electron';
-import { open } from 'sqlite';
-import sqlite from 'sqlite3';
 
+import type { AbstractConnection } from '@/common/lib/abstract-connection';
+import { SqliteConnection } from '@/common/lib/sqlite-connection';
+import type { Connection } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
-import type { ConnectionDrivers } from '@/shared/types';
+import { createSqlAgent } from '@/lib/sql-agent';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 class ConnectionProxy extends AbstractController {
-  openConnections = new Map<string, unknown>();
+  openConnections = new Map<string, AbstractConnection<unknown>>();
 
-  async createConnection(
-    _: IpcEvent,
-    id: string,
-    connectionDriver: ConnectionDrivers,
-    args: any,
-  ) {
+  async createConnection(_: IpcEvent, { id, driver, config }: Connection) {
     if (this.openConnections.has(id)) {
       return false;
     }
-
-    let connection: unknown;
-    switch (connectionDriver) {
+    switch (driver) {
       case 'sqlite':
-        connection = await open({ driver: sqlite.Database, ...args });
+        {
+          const db = new SqliteDatabase(config.filename);
+          this.openConnections.set(id, new SqliteConnection(db));
+        }
         break;
     }
 
-    this.openConnections.set(id, connection);
     return true;
   }
 
@@ -37,16 +33,31 @@ class ConnectionProxy extends AbstractController {
   async forwardCall(
     _: IpcEvent,
     id: string,
-    methodName: string,
-    ...args: any[]
+    methodName: keyof typeof AbstractConnection.prototype,
+    args: unknown[],
   ) {
     const connection = this.openConnections.get(id);
+
     if (!connection) {
-      throw new Error(`Connection \`${id}\` does not exist or was closed.`);
+      throw new Error(`Connection \`${id}\` is not open.`);
     }
 
-    const method = Reflect.get(connection, methodName);
+    const method = Reflect.get(connection, methodName) as (
+      ...args: unknown[]
+    ) => unknown;
+
     return Reflect.apply(method, connection, args);
+  }
+
+  async agent(_: IpcEvent, id: string, query: string) {
+    const connection = this.openConnections.get(id);
+
+    if (!connection) {
+      throw new Error(`Connection \`${id}\` is not open.`);
+    }
+
+    const a = createSqlAgent(connection);
+    return (await a.chat({ message: query })).message.content;
   }
 }
 

@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 
-import { AbstractConnection } from '@/lib/connections/abstract-connection';
-import { PostgresqlConnection } from '@/lib/connections/postgresql-connection';
-import { SqliteConnection } from '@/lib/connections/sqlite-connection';
+import { ProxyConnection } from '@/lib/proxy-connection';
 
 interface UseConnections {
   activeConnectionId: string;
-  connections: AbstractConnection<object, unknown>[];
+  connections: ProxyConnection[];
   getConnections: () => Promise<void>;
   changeConnection: (connectionId: string) => Promise<void>;
 }
@@ -17,27 +15,10 @@ const useConnections = create<UseConnections>()((set) => ({
 
   async getConnections() {
     const connections = (await window.SettingsController.getConnections()).map(
-      (connection) => {
-        switch (connection.driver) {
-          case 'sqlite':
-            return new SqliteConnection(
-              connection.id,
-              connection.name,
-              connection.config,
-            );
-          case 'postgresql':
-            return new PostgresqlConnection(
-              connection.id,
-              connection.name,
-              connection.config,
-            );
-        }
-      },
+      (connection) => new ProxyConnection(connection),
     );
 
-    await Promise.all(
-      connections.map((connection) => connection.createProxiedConnection()),
-    );
+    await Promise.all(connections.map((connection) => connection.connect()));
 
     set({ connections });
   },

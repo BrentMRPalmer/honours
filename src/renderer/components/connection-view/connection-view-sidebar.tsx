@@ -1,16 +1,15 @@
 import { Portal } from '@radix-ui/react-portal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
-import { SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
+import { BotIcon, SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-// import { TableView } from '@/components/table-view';
+import { Chat } from '@/components/chat';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { AbstractSqlConnection } from '@/lib/connections/abstract-sql-connection';
 import { cn } from '@/lib/utils';
 
 import { QueryResultTable } from '../query-result-table';
@@ -29,9 +28,7 @@ function ConnectionViewSidebar() {
 
   // Get tables from the current connection
   useEffect(() => {
-    if (connection instanceof AbstractSqlConnection) {
-      connection.getTables().then(setTables);
-    }
+    connection.getTables().then(setTables);
   }, [connection]);
 
   const portalContainer = document.getElementById(
@@ -104,6 +101,22 @@ function ConnectionViewSidebar() {
               Editor
             </TooltipContent>
           </Tooltip>
+
+          <Tooltip disableHoverableContent>
+            <TooltipTrigger
+              asChild
+              onClick={() => tabManager.createTab('AI Chat', <Chat />)}
+            >
+              <Button variant='ghost' size='icon' asChild>
+                <div>
+                  <BotIcon strokeWidth={1.5} />
+                </div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side='bottom' sideOffset={2}>
+              AI Chat
+            </TooltipContent>
+          </Tooltip>
         </TabsList>
       </Portal>
 
@@ -119,9 +132,7 @@ function ConnectionViewSidebar() {
               tabManager.createTab(
                 table,
                 <QueryResultTable
-                  query={(
-                    connection as AbstractSqlConnection<object, unknown>
-                  ).getPaginatedTableData(table)}
+                  query={connection.getPaginatedTableData(table)}
                 />,
               )
             }
