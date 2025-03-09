@@ -3,14 +3,14 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+import type { Connection, ConnectionDriver } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
-import type { Connection, ConnectionDrivers } from '@/shared/types';
 
 interface Settings {
   connections: {
     id: string;
     name: string;
-    driver: ConnectionDrivers;
+    driver: ConnectionDriver;
     config: unknown;
   }[];
 }
@@ -65,7 +65,7 @@ class SettingsController extends AbstractController {
   async addConnections(
     _: IpcEvent,
     name: string,
-    driver: ConnectionDrivers,
+    driver: ConnectionDriver,
     config: unknown,
   ) {
     const settings = await this.#readSettingsFile();

@@ -4,6 +4,7 @@
     "lib": ["ES2023"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "esModuleInterop": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -21,8 +22,8 @@
 
     "paths": {
       "@/*": ["./src/electron/*"],
-      "@/shared/*": ["./src/shared/*"]
+      "@/common/*": ["./src/common/*"]
     }
   },
-  "include": ["vite.*.config.ts", "./src/electron"]
+  "include": ["vite.*.config.ts", "./src/electron", "./src/common"]
 }

@@ -1,26 +1,22 @@
 import { use } from 'react';
 
+import { QueryResult } from '@/common/types';
+
 interface QueryResultTableProps {
-  query: Promise<Record<string, unknown>[]>;
+  query: Promise<QueryResult<object>>;
 }
 
 function QueryResultTable({ query }: QueryResultTableProps) {
   const result = use(query);
-
-  if (result.length === 0) {
-    return <div>The table is empty</div>;
-  }
-
-  const columns = Object.keys(result[0]);
 
   return (
     <div className='h-full w-full overflow-auto'>
       <table className='h-max w-max border-collapse'>
         <thead>
           <tr className='bg-muted/50'>
-            {columns.map((column) => (
+            {result.columns.map((column, columnIndex) => (
               <th
-                key={column}
+                key={columnIndex}
                 className='text-muted-foreground border-border border px-3 py-2 text-left text-sm font-medium'
               >
                 {column}
@@ -29,14 +25,14 @@ function QueryResultTable({ query }: QueryResultTableProps) {
           </tr>
         </thead>
         <tbody>
-          {result.map((row, rowIndex) => (
+          {result.rows.map((row, rowIndex) => (
             <tr key={rowIndex} className='hover:bg-muted/50 transition-colors'>
-              {Object.entries(row).map(([column, value]) => (
+              {result.columns.map((column, columnIndex) => (
                 <td
-                  key={`${rowIndex}-${column}`}
+                  key={columnIndex}
                   className='border-border h-min max-w-80 truncate border px-3 py-2 text-sm'
                 >
-                  {String(value)}
+                  {String(row[column])}
                 </td>
               ))}
             </tr>

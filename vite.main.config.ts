@@ -5,13 +5,13 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   build: {
     rollupOptions: {
-      external: ['sqlite3'],
+      external: ['better-sqlite3'],
     },
   },
   resolve: {
     alias: {
+      '@/common': path.resolve(__dirname, './src/common'),
       '@': path.resolve(__dirname, './src/electron'),
-      '@/shared': path.resolve(__dirname, './src/shared'),
     },
   },
 });

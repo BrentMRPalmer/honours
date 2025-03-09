@@ -14,6 +14,8 @@ function ConnectionList() {
     getConnections();
   }, [getConnections]);
 
+  if (connections.length === 0) return null;
+
   return (
     <Tabs
       className='flex h-full'
