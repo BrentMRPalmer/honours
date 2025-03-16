@@ -1,4 +1,4 @@
-import { use } from 'react';
+import { useEffect, useState } from 'react';
 
 import { QueryResult } from '@/common/types';
 
@@ -7,7 +7,13 @@ interface QueryResultTableProps {
 }
 
 function QueryResultTable({ query }: QueryResultTableProps) {
-  const result = use(query);
+  const [result, setResult] = useState<any>();
+
+  useEffect(() => {
+    query.then((r) => setResult(r));
+  });
+
+  if (result === undefined) return;
 
   return (
     <div className='h-full w-full overflow-auto'>
