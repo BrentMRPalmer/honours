@@ -7,6 +7,10 @@ import { Button } from './ui/button';
 import { Play } from 'lucide-react';
 
 const EditorToolbar = () => {
+//   const runQuery = async () {
+    
+//   }
+
   return (
     <div>
       <Tooltip disableHoverableContent>

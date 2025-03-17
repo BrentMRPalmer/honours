@@ -6,10 +6,14 @@ import { ConnectionDriver } from '@/common/types';
 
 type Language = 'sql' | 'javascript' | 'plaintext';
 
-function MonacoEditor() {
+interface MonacoEditorInputProps {
+  value: string;
+  setValue: React.Dispatch<React.SetStateAction<string>>;
+}
+
+function MonacoEditor({ value, setValue }: MonacoEditorInputProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { connection } = useConnectionViewContext();
-  const [value, setValue] = useState('');
 
   // Get the current connection driver name
   const connectionType: ConnectionDriver = connection.connectionDriver;
