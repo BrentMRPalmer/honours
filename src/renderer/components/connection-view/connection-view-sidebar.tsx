@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { QueryResultTable } from '../query-result-table';
+import { PaginatedQueryResultTable } from '../paginated-query-result-table';
 import { useConnectionViewContext } from './connection-view-provider';
 
 function ConnectionViewSidebar() {
@@ -134,8 +134,9 @@ function ConnectionViewSidebar() {
             onClick={() =>
               tabManager.createTab(
                 table,
-                <QueryResultTable
-                  query={connection.getPaginatedTableData(table)}
+                <PaginatedQueryResultTable
+                  table={table}
+                  connection={connection}
                 />,
               )
             }

@@ -1,4 +1,4 @@
-type ConnectionDriver = 'sqlite' | 'postgresql';
+type ConnectionDriver = 'sqlite' | 'postgresql' | 'mysql' | 'maria' | 'mongo' | 'redis';
 
 type Connection = {
   id: string;

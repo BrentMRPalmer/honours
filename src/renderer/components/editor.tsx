@@ -1,22 +1,29 @@
-import { DropdownMenuRadioGroupDemo } from '@/components/language-selector';
 import { MonacoEditor } from '@/components/monaco-editor';
-
+import { QueryResultTable } from './query-result-table';
+import { Allotment } from 'allotment';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
+import { EditorToolbar } from './editor-toolbar';
 
 function EditorContainer() {
   const { connection } = useConnectionViewContext();
 
-  // let result = await connection.query("SELECT * FROM professors")
-
   return (
-    <div>
-      <p> {connection.connectionDriver} </p>
-      {/* <QueryResultTable
-        query={connection.getPaginatedTableData('professors')}
-      /> */}
-      <DropdownMenuRadioGroupDemo />
-      <MonacoEditor />
+    <div style={{ height: "90vh" }}>
+      <Allotment vertical>
+        <Allotment.Pane minSize={100}>
+          <EditorToolbar />
+          <MonacoEditor />
+        </Allotment.Pane>
+        <Allotment.Pane minSize={100}>
+          <QueryResultTable
+            query={connection.getPaginatedTableData('professors')}
+          />
+        </Allotment.Pane>
+      </Allotment>
     </div>
+
+    
+
   );
 }
 
