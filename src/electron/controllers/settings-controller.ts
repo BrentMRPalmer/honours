@@ -47,7 +47,7 @@ class SettingsController extends AbstractController {
         name: 'db1',
         config: {
           filename:
-            '/Users/alex/Programming/a/uo.zone/backend/database/database.sqlite',
+            'C:\\Season11\\Honours\\Data\\var\\www\\html\\database\\database.sqlite',
         },
       },
       {
@@ -56,7 +56,7 @@ class SettingsController extends AbstractController {
         name: 'db2',
         config: {
           filename:
-            '/Users/alex/Programming/a/uo.zone/backend/database/database.sqlite',
+            'C:\\Season11\\Honours\\Data\\var\\www\\html\\database\\database.sqlite',
         },
       },
     ] as Connection[];

@@ -4,6 +4,7 @@ import { BotIcon, SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { Chat } from '@/components/chat';
+import { EditorContainer } from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -89,7 +90,9 @@ function ConnectionViewSidebar() {
           <Tooltip disableHoverableContent>
             <TooltipTrigger
               asChild
-              onClick={() => tabManager.createTab('editor', <div>editor</div>)}
+              onClick={() =>
+                tabManager.createTab('editor', <EditorContainer />)
+              }
             >
               <Button variant='ghost' size='icon' asChild>
                 <div>
