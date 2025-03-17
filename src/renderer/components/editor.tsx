@@ -8,7 +8,7 @@ function EditorContainer() {
   const { connection } = useConnectionViewContext();
 
   return (
-    <div style={{ height: "90vh" }}>
+    <div style={{ height: '90vh' }}>
       <Allotment vertical>
         <Allotment.Pane minSize={100}>
           <EditorToolbar />
@@ -21,9 +21,6 @@ function EditorContainer() {
         </Allotment.Pane>
       </Allotment>
     </div>
-
-    
-
   );
 }
 

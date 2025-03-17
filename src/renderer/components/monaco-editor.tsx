@@ -17,19 +17,19 @@ function MonacoEditor() {
   // Use a record to establish which query highlighting syntax should
   // be used depending on the current database type
   const dbTypes: Record<ConnectionDriver, Language> = {
-    "sqlite": "sql",
-    "postgresql": "sql",
-    "mysql": "sql",
-    "maria": "sql",
-    "mongo": "javascript",
-    "redis": "plaintext"
-  }
+    sqlite: 'sql',
+    postgresql: 'sql',
+    mysql: 'sql',
+    maria: 'sql',
+    mongo: 'javascript',
+    redis: 'plaintext',
+  };
 
   const starterCode: Record<Language, string> = {
-    "sql": `-- Type your query here`,
-    "javascript": `// Type your query here`,
-    "plaintext": `Type your query here`
-  }
+    sql: `-- Type your query here`,
+    javascript: `// Type your query here`,
+    plaintext: `Type your query here`,
+  };
 
   // Extract the corresponding highlighting syntax from the record
   const connectionLanguage = dbTypes[connectionType];
@@ -43,7 +43,6 @@ function MonacoEditor() {
   console.log('MonacoEditor component rendered!');
 
   return (
-     
     <Editor
       height='90vh'
       defaultLanguage={connectionLanguage}
