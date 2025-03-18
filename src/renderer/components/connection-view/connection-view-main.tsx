@@ -31,7 +31,7 @@ function ConnectionViewMain() {
               <SortableItem key={id}>
                 <TabsTrigger
                   value={id}
-                  className='data-[state=inactive]:bg-accent relative flex h-6 w-full min-w-40 items-center justify-center gap-2'
+                  className='data-[state=inactive]:bg-accent data-[state=inactive]:hover:bg-gray-200 hover:bg-gray-200 relative flex h-6 w-full min-w-40 items-center justify-center gap-2'
                   onMouseDown={(event) => {
                     // Prevents tab switching when clicking close button
                     const fromTabClose = (event.target as HTMLElement)
@@ -58,7 +58,7 @@ function ConnectionViewMain() {
       </TabsList>
 
       {tabManager.tabs.map(({ id, component }) => (
-        <TabsContent key={id} value={id} className='overflow-hidden'>
+        <TabsContent key={id} value={id} className='overflow-hidden data-[state=inactive]:hidden' forceMount>
           {component}
         </TabsContent>
       ))}
