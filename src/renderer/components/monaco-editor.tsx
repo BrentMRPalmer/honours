@@ -1,19 +1,18 @@
 import Editor from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
 import { ConnectionDriver } from '@/common/types';
 
 type Language = 'sql' | 'javascript' | 'plaintext';
 
 interface MonacoEditorInputProps {
-  value: string;
-  setValue: React.Dispatch<React.SetStateAction<string>>;
+  editorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
 }
 
-function MonacoEditor({ value, setValue }: MonacoEditorInputProps) {
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
   const { connection } = useConnectionViewContext();
+  const [value, setValue] = useState('');
 
   // Get the current connection driver name
   const connectionType: ConnectionDriver = connection.connectionDriver;

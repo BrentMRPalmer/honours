@@ -5,20 +5,36 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from './ui/button';
 import { Play } from 'lucide-react';
+import { editor } from 'monaco-editor';
+import { useConnectionViewContext } from './connection-view/connection-view-provider';
+import { QueryResult } from '@/common/types';
 
-const EditorToolbar = () => {
-//   const runQuery = async () {
-    
-//   }
+interface EditorToolbarInputProps {
+  editorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
+  setQueryResult: React.Dispatch<React.SetStateAction<Promise<QueryResult<any>> | null>>;
+}
+
+const EditorToolbar = ({ editorRef, setQueryResult}: EditorToolbarInputProps) => {
+  const { connection } = useConnectionViewContext();
+
+  const runQuery = async () => {
+    console.log("run query")
+    if (!editorRef.current ) return;
+
+    const sourceCode = editorRef.current.getValue();
+    if (!sourceCode) return;
+
+    setQueryResult(null)
+    console.log("run query2")
+    setQueryResult(connection.query(sourceCode));
+  }
 
   return (
     <div>
       <Tooltip disableHoverableContent>
         <TooltipTrigger
           asChild
-          onClick={() => {
-            console.log('Hello');
-          }}
+          onClick={runQuery}
         >
           <Button variant='ghost' size='icon' asChild>
             <div>
