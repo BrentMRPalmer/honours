@@ -1,11 +1,7 @@
 import SqliteDatabase from 'better-sqlite3';
 import type { IpcMainInvokeEvent as IpcEvent } from 'electron';
-import MariaDB from 'mariadb';
-import { Client as PostgresqlDatabase } from 'pg';
 
 import type { AbstractConnection } from '@/common/lib/abstract-connection';
-import { MysqlConnection } from '@/common/lib/mysql-connection';
-import { PostgresqlConnection } from '@/common/lib/pg-connection';
 import { SqliteConnection } from '@/common/lib/sqlite-connection';
 import type { Connection } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
@@ -22,29 +18,7 @@ class ConnectionProxy extends AbstractController {
       case 'sqlite':
         {
           const db = new SqliteDatabase(config.filename);
-          const connection = new SqliteConnection(db);
-          await connection.connect();
-
-          this.openConnections.set(id, connection);
-        }
-        break;
-      case 'postgresql':
-        {
-          const db = new PostgresqlDatabase(config);
-          const connection = new PostgresqlConnection(db);
-          await connection.connect();
-
-          this.openConnections.set(id, connection);
-        }
-        break;
-      case 'mysql':
-      case 'maria':
-        {
-          const db = await MariaDB.createConnection(config);
-          const connection = new MysqlConnection(db);
-          await connection.connect();
-
-          this.openConnections.set(id, connection);
+          this.openConnections.set(id, new SqliteConnection(db));
         }
         break;
     }
@@ -53,16 +27,7 @@ class ConnectionProxy extends AbstractController {
   }
 
   async deleteConnection(_: IpcEvent, id: string) {
-    const connection = this.openConnections.get(id);
-
-    if (connection) {
-      await connection.disconnect();
-      this.openConnections.delete(id);
-
-      return true;
-    }
-
-    return false;
+    return this.openConnections.delete(id);
   }
 
   async forwardCall(
