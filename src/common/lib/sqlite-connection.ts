@@ -19,7 +19,6 @@ class SqliteConnection extends AbstractConnection<Database> {
 
   async query<T extends object>(query: string) {
     const statement = this.db.prepare<[], T>(query);
-    console.log(statement)
     const rows = statement.all();
     const columns = statement.columns().map((c) => c.column) as (keyof T)[];
 

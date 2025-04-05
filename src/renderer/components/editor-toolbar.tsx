@@ -18,14 +18,11 @@ const EditorToolbar = ({ editorRef, setQueryResult}: EditorToolbarInputProps) =>
   const { connection } = useConnectionViewContext();
 
   const runQuery = async () => {
-    console.log("run query")
     if (!editorRef.current ) return;
 
     const sourceCode = editorRef.current.getValue();
     if (!sourceCode) return;
 
-    setQueryResult(null)
-    console.log("run query2")
     setQueryResult(connection.query(sourceCode));
   }
 

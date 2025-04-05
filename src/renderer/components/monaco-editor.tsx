@@ -28,6 +28,7 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
     redis: 'plaintext',
   };
 
+  // Use a record to establish starter code for each database
   const starterCode: Record<Language, string> = {
     sql: `-- Type your query here`,
     javascript: `// Type your query here`,
@@ -39,11 +40,23 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
 
   // Focus automatically places the user's cursor into the editor
   const onMount = (editorInstance: editor.IStandaloneCodeEditor) => {
+    // Save a reference to the current editor instance
     editorRef.current = editorInstance;
+
+    // Get the model for the current editor, allowing for accessing the text
+    const editorModel = editorRef.current.getModel()
+    if (editorModel) {
+      // Extact the number of lines, and the length of the last line
+      const lineCount = editorModel.getLineCount()
+      const lineLength = editorModel.getLineLength(lineCount)
+
+      // Set the cursor to the end of the first line
+      editorRef.current.setPosition({ column: lineLength + 1, lineNumber: lineCount });
+    }
+    
+    // Focus the editor
     editorRef.current.focus();
   };
-
-  console.log('MonacoEditor component rendered!');
 
   return (
     <Editor

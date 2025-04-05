@@ -1,14 +1,12 @@
 import { MonacoEditor } from '@/components/monaco-editor';
 import { QueryResultTable } from './query-result-table';
 import { Allotment } from 'allotment';
-import { useConnectionViewContext } from './connection-view/connection-view-provider';
 import { EditorToolbar } from './editor-toolbar';
 import { useRef, useState } from 'react';
 import { editor } from 'monaco-editor';
 import type { QueryResult } from '@/common/types';
 
 function EditorContainer() {
-  const { connection } = useConnectionViewContext();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [queryResult, setQueryResult] = useState<Promise<QueryResult<any>> | null>(null);
 
