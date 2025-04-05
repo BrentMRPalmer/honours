@@ -1,7 +1,14 @@
 import type { ConnectionConfig as MariaConnectionConfig } from 'mariadb';
 import type { ConnectionConfig as PgConnectionConfig } from 'pg';
 
-type ConnectionDriver = 'sqlite' | 'postgresql' | 'mysql' | 'maria';
+
+type ConnectionDriver =
+  | 'sqlite'
+  | 'postgresql'
+  | 'mysql'
+  | 'maria'
+  | 'mongo'
+  | 'redis';
 
 type Connection = {
   id: string;

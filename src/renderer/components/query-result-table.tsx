@@ -7,7 +7,7 @@ interface QueryResultTableProps {
 }
 
 function QueryResultTable({ query }: QueryResultTableProps) {
-  const [result, setResult] = useState<any>();
+  const [result, setResult] = useState<QueryResult<object> | undefined>();
 
   useEffect(() => {
     query.then((r) => setResult(r));
