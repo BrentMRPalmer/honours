@@ -44,16 +44,19 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
     editorRef.current = editorInstance;
 
     // Get the model for the current editor, allowing for accessing the text
-    const editorModel = editorRef.current.getModel()
+    const editorModel = editorRef.current.getModel();
     if (editorModel) {
       // Extact the number of lines, and the length of the last line
-      const lineCount = editorModel.getLineCount()
-      const lineLength = editorModel.getLineLength(lineCount)
+      const lineCount = editorModel.getLineCount();
+      const lineLength = editorModel.getLineLength(lineCount);
 
       // Set the cursor to the end of the first line
-      editorRef.current.setPosition({ column: lineLength + 1, lineNumber: lineCount });
+      editorRef.current.setPosition({
+        column: lineLength + 1,
+        lineNumber: lineCount,
+      });
     }
-    
+
     // Focus the editor
     editorRef.current.focus();
   };

@@ -46,8 +46,7 @@ class SettingsController extends AbstractController {
         driver: 'sqlite',
         name: 'db1',
         config: {
-          filename:
-            'C:\\Season11\\Honours\\Data\\sakila_master.db',
+          filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
         },
       },
       {
@@ -55,8 +54,7 @@ class SettingsController extends AbstractController {
         driver: 'sqlite',
         name: 'db2',
         config: {
-          filename:
-            'C:\\Season11\\Honours\\Data\\sakila_master.db',
+          filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
         },
       },
     ] as Connection[];
