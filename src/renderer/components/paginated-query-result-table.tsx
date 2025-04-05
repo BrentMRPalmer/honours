@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-
+import { QueryResult } from '@/common/types';
 import { Button } from '@/components/ui/button';
 import { QueryResultTable } from '@/components/query-result-table';
 import type { ProxyConnection } from '@/lib/proxy-connection';
