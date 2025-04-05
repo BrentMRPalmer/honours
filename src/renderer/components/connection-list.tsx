@@ -35,7 +35,7 @@ function ConnectionList() {
             <SortableItem key={connection.id}>
               <TabsTrigger
                 value={connection.id}
-                className='text-2xs flex flex-col items-center gap-1'
+                className='data-[state=active]:bg-accent text-2xs flex flex-col items-center gap-1 rounded-r-md px-2 py-1 hover:bg-gray-200 data-[state=active]:hover:bg-gray-200'
               >
                 <DatabaseIcon size={25} strokeWidth={1} />
                 {connection.name}

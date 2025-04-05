@@ -4,6 +4,7 @@ import { BotIcon, SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { Chat } from '@/components/chat';
+import { EditorContainer } from '@/components/editor';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { QueryResultTable } from '../query-result-table';
+import { PaginatedQueryResultTable } from '../paginated-query-result-table';
 import { useConnectionViewContext } from './connection-view-provider';
 
 function ConnectionViewSidebar() {
@@ -89,7 +90,9 @@ function ConnectionViewSidebar() {
           <Tooltip disableHoverableContent>
             <TooltipTrigger
               asChild
-              onClick={() => tabManager.createTab('editor', <div>editor</div>)}
+              onClick={() =>
+                tabManager.createTab('editor', <EditorContainer />)
+              }
             >
               <Button variant='ghost' size='icon' asChild>
                 <div>
@@ -131,8 +134,9 @@ function ConnectionViewSidebar() {
             onClick={() =>
               tabManager.createTab(
                 table,
-                <QueryResultTable
-                  query={connection.getPaginatedTableData(table)}
+                <PaginatedQueryResultTable
+                  table={table}
+                  connection={connection}
                 />,
               )
             }
