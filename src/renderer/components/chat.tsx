@@ -42,26 +42,28 @@ function Chat() {
   };
 
   return (
-    <div>
-      <Select value={selectedModel} onValueChange={(val) => setSelectedModel(val)}>
-        <SelectTrigger className="w-[240px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="openrouter/quasar-alpha">Quasar Alpha</SelectItem>
-          <SelectItem value="google/gemini-2.5-pro-exp-03-25:free">Gemini 2.5 Pro Experimental</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <ChatSection handler={handler}>
-        <ChatMessages>
-          <ChatMessages.List className='h-auto max-h-[400px]' />
-          <ChatMessages.Actions />
-        </ChatMessages>
-        <ChatInput />
+    <div className="h-full flex flex-col">
+      <div className="p-4">
+        <Select value={selectedModel} onValueChange={(val) => setSelectedModel(val)}>
+          <SelectTrigger className="w-[240px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="openrouter/quasar-alpha">Quasar Alpha</SelectItem>
+            <SelectItem value="google/gemini-2.5-pro-exp-03-25:free">Gemini 2.5 Pro Experimental</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <ChatSection handler={handler} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <ChatMessages>
+            <ChatMessages.List className="space-y-4" />
+            <ChatMessages.Actions />
+          </ChatMessages>
+        </div>
+        <ChatInput className="p-4 border-t"/>
       </ChatSection>
     </div>
-    
   );
 }
 
