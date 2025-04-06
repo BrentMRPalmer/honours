@@ -43,7 +43,7 @@ function Chat() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4">
+      <div className="p-4 border-b">
         <Select value={selectedModel} onValueChange={(val) => setSelectedModel(val)}>
           <SelectTrigger className="w-[240px]">
             <SelectValue />

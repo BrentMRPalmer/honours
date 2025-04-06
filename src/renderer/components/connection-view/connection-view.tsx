@@ -13,8 +13,8 @@ interface ConnectionViewProps {
 function ConnectionView({ connection }: ConnectionViewProps) {
   return (
     <ConnectionViewProvider connection={connection}>
-      <Allotment>
-        <Allotment.Pane minSize={100}>
+      <Allotment defaultSizes={[200, 800]}>
+        <Allotment.Pane minSize={100} maxSize={250}>
           <ConnectionViewSidebar />
         </Allotment.Pane>
         <Allotment.Pane minSize={100}>
