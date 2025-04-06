@@ -49,14 +49,14 @@ class ConnectionProxy extends AbstractController {
     return Reflect.apply(method, connection, args);
   }
 
-  async agent(_: IpcEvent, id: string, query: string) {
+  async agent(_: IpcEvent, id: string, query: string, selectedModel: string) {
     const connection = this.openConnections.get(id);
 
     if (!connection) {
       throw new Error(`Connection \`${id}\` is not open.`);
     }
 
-    const a = createSqlAgent(connection);
+    const a = createSqlAgent(connection, selectedModel);
     return (await a.chat({ message: query })).message.content;
   }
 }

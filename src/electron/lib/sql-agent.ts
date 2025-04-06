@@ -10,7 +10,15 @@ Settings.callbackManager.on('llm-tool-result', (event) => {
   console.log(event.detail);
 });
 
-function createSqlAgent(connection: AbstractConnection<unknown>) {
+function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: string) {
+
+  // Instantiate the LLM for the agent
+  const llm = new OpenAI({
+    apiKey: process.env['OPENROUTER_API_KEY'] as string,
+    baseURL: "https://openrouter.ai/api/v1",
+    model: selectedModel
+  });
+
   async function runQuery({ query }: { query: string }) {
     return await connection
       .query(query)
@@ -92,7 +100,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>) {
       properties: {
         table: {
           type: 'string',
-          description: 'Table to retrieve schema for',
+          description: 'Table to retrieve the first 5 rows from',
         },
       },
       required: ['table'],
@@ -105,11 +113,6 @@ function createSqlAgent(connection: AbstractConnection<unknown>) {
     getTableSchemaTool,
     getTableFirst5RowsTool,
   ];
-
-  const llm = new OpenAI({
-    apiKey: process.env['OPENAI_API_KEY'] as string,
-    model: 'gpt-4o',
-  });
 
   const systemPrompt = `
     You are an SQL expert who answers questions using data from your database. When querying the database
