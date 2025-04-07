@@ -167,13 +167,13 @@ const EditorToolbar = ({
           <Button
             variant='default'
             size='sm'
-            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-8 ml-2 px-3 py-0 border disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground ml-2 h-8 border px-3 py-0 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
             onClick={runLine}
             disabled={!hasContent}
           >
             <span className='flex items-center'>
               <PlaySquare size={14} strokeWidth={2} />
-              <span className='ml-1.5 font-semibold text-xs'>Run Line</span>
+              <span className='ml-1.5 text-xs font-semibold'>Run Line</span>
             </span>
           </Button>
         </TooltipTrigger>
@@ -187,13 +187,13 @@ const EditorToolbar = ({
           <Button
             variant='default'
             size='sm'
-            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-8 ml-2 px-3 py-0 border disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground ml-2 h-8 border px-3 py-0 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
             onClick={runSelection}
             disabled={!hasContent}
           >
             <span className='flex items-center'>
               <PlayCircle size={14} strokeWidth={2} />
-              <span className='ml-1.5 font-semibold text-xs'>Run Selected</span>
+              <span className='ml-1.5 text-xs font-semibold'>Run Selected</span>
             </span>
           </Button>
         </TooltipTrigger>

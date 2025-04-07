@@ -89,7 +89,9 @@ function ConnectionViewMain() {
                     }
                   }}
                 >
-                  <span className='truncate pr-5 font-semibold text-xs'>{title}</span>
+                  <span className='truncate pr-5 text-xs font-semibold'>
+                    {title}
+                  </span>
                   <XIcon
                     size={16}
                     className='absolute right-2.5'
