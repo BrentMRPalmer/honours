@@ -96,22 +96,24 @@ class SettingsController extends AbstractController {
   ): Promise<Connection> {
     try {
       const settings = await this.#readSettingsFile();
-      const connectionIndex = settings.connections.findIndex(conn => conn.id === id);
-      
+      const connectionIndex = settings.connections.findIndex(
+        (conn) => conn.id === id,
+      );
+
       if (connectionIndex === -1) {
         throw new Error(`Connection with id ${id} not found`);
       }
-      
-      const updatedConnection = { 
-        id, 
-        name, 
-        driver, 
-        config 
+
+      const updatedConnection = {
+        id,
+        name,
+        driver,
+        config,
       } as Connection;
-      
+
       settings.connections[connectionIndex] = updatedConnection;
       await this.#writeSettingsFile(settings);
-      
+
       return updatedConnection;
     } catch (error) {
       console.error('Error updating connection:', error);
@@ -119,21 +121,20 @@ class SettingsController extends AbstractController {
     }
   }
 
-  async deleteConnection(
-    _: IpcEvent,
-    id: string,
-  ): Promise<boolean> {
+  async deleteConnection(_: IpcEvent, id: string): Promise<boolean> {
     try {
       const settings = await this.#readSettingsFile();
       const initialLength = settings.connections.length;
-      
-      settings.connections = settings.connections.filter(conn => conn.id !== id);
-      
+
+      settings.connections = settings.connections.filter(
+        (conn) => conn.id !== id,
+      );
+
       if (settings.connections.length !== initialLength) {
         await this.#writeSettingsFile(settings);
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error deleting connection:', error);
@@ -141,21 +142,19 @@ class SettingsController extends AbstractController {
     }
   }
 
-  async searchConnections(
-    _: IpcEvent,
-    query: string,
-  ): Promise<Connection[]> {
+  async searchConnections(_: IpcEvent, query: string): Promise<Connection[]> {
     try {
       const settings = await this.#readSettingsFile();
-      
+
       if (!query || query.trim() === '') {
         return settings.connections;
       }
-      
+
       const lowerQuery = query.toLowerCase();
-      return settings.connections.filter(conn => 
-        conn.name.toLowerCase().includes(lowerQuery) || 
-        conn.driver.toLowerCase().includes(lowerQuery)
+      return settings.connections.filter(
+        (conn) =>
+          conn.name.toLowerCase().includes(lowerQuery) ||
+          conn.driver.toLowerCase().includes(lowerQuery),
       );
     } catch (error) {
       console.error('Error searching connections:', error);

@@ -67,14 +67,14 @@ type QueryResult<T extends object> = {
   rows: T[];
 };
 
-export type { 
-  Connection, 
-  ConnectionDriver, 
+export type {
+  Connection,
+  ConnectionDriver,
   QueryResult,
   BaseConnection,
   SqliteConfig,
   PostgresqlConfig,
   MySQLConfig,
   MongoConfig,
-  RedisConfig
+  RedisConfig,
 };

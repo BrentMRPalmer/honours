@@ -13,7 +13,7 @@ interface ConnectionViewProps {
 function ConnectionView({ connection }: ConnectionViewProps) {
   return (
     <ConnectionViewProvider connection={connection}>
-      <div className="h-full border border-border rounded-md overflow-hidden">
+      <div className='border-border h-full overflow-hidden rounded-md border'>
         <Allotment defaultSizes={[200, 800]}>
           <Allotment.Pane minSize={100}>
             <ConnectionViewSidebar />

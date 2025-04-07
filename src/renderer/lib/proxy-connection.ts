@@ -52,7 +52,7 @@ class ProxyConnection extends AbstractConnection<undefined> {
       [table],
     )) as QueryResult<object>;
   }
-  
+
   async getPaginatedTableData(
     tableName: string,
     page: number = 1,

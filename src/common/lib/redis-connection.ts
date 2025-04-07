@@ -12,7 +12,7 @@ class RedisConnection extends AbstractConnection<string> {
     console.log(`Redis connection string: ${this.db}`);
     const command = `redis-cli -u "${this.db}" --raw PING`;
     console.log(`Testing Redis connection: ${command}`);
-    
+
     const result = await this.execCommandRaw(command);
     if (result !== 'PONG') {
       throw new Error('Failed to connect to Redis');
@@ -27,7 +27,7 @@ class RedisConnection extends AbstractConnection<string> {
     const trimmed = query.trim();
 
     // If the command is a GET, wrap it in a Lua script to return both key and value.
-    if (trimmed.toUpperCase().startsWith("GET ")) {
+    if (trimmed.toUpperCase().startsWith('GET ')) {
       const parts = trimmed.split(/\s+/);
       if (parts.length >= 2) {
         const key = parts[1];
@@ -37,29 +37,37 @@ class RedisConnection extends AbstractConnection<string> {
         const output = await this.execCommandRaw(command);
         try {
           const parsed = JSON.parse(output);
-          return { rows: [parsed], columns: ['key', 'value'] } as QueryResult<T>;
+          return {
+            rows: [parsed],
+            columns: ['key', 'value'],
+          } as QueryResult<T>;
         } catch (error) {
           return { rows: [], columns: ['key', 'value'] } as QueryResult<T>;
         }
       }
     }
 
-    if (trimmed.toUpperCase().startsWith("KEYS ")) {
+    if (trimmed.toUpperCase().startsWith('KEYS ')) {
       const command = `redis-cli -u "${this.db}" --raw ${query}`;
       const output = await this.execCommandRaw(command);
       // Split the output by newline and filter out empty lines.
-      const keys = output.split('\n').filter(key => key.trim() !== '');
+      const keys = output.split('\n').filter((key) => key.trim() !== '');
       // Map each key to an object with key and a null value (or you can adjust as needed).
-      const rows = keys.map(key => ({ key, value: null }));
+      const rows = keys.map((key) => ({ key, value: null }));
       return { rows, columns: ['key', 'value'] } as QueryResult<T>;
     }
-    
-    const listingCommands = ["HGETALL", "SCAN", "LRANGE", "SMEMBERS", "ZRANGE"];
+
+    const listingCommands = ['HGETALL', 'SCAN', 'LRANGE', 'SMEMBERS', 'ZRANGE'];
     for (const cmd of listingCommands) {
       if (trimmed.toUpperCase().startsWith(cmd)) {
         return {
-          rows: [{ key: "Not implemented", value: `${cmd} output formatting not implemented` }],
-          columns: ['key', 'value']
+          rows: [
+            {
+              key: 'Not implemented',
+              value: `${cmd} output formatting not implemented`,
+            },
+          ],
+          columns: ['key', 'value'],
         } as QueryResult<T>;
       }
     }
@@ -71,7 +79,11 @@ class RedisConnection extends AbstractConnection<string> {
     try {
       // Try to parse as JSON first
       const parsed = JSON.parse(output);
-      if (parsed && typeof parsed === 'object' && parsed.hasOwnProperty('rows')) {
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        parsed.hasOwnProperty('rows')
+      ) {
         result = parsed;
       } else {
         // Ensure we're always returning an array of objects
@@ -101,14 +113,14 @@ class RedisConnection extends AbstractConnection<string> {
     // Hardcoded schema: always return { key: "key", value: "value" }.
     return {
       rows: [{ key: 'key', value: 'value' }],
-      columns: ['key', 'value']
+      columns: ['key', 'value'],
     };
   }
 
   async getPaginatedTableData(
     tableName: string,
     page: number = 1,
-    pageSize: number = 400
+    pageSize: number = 400,
   ): Promise<QueryResult<any>> {
     const offset = (page - 1) * pageSize;
     // Lua script to get all keys, sort them, and return paginated key/value pairs.

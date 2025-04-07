@@ -12,11 +12,11 @@ class MongoConnection extends AbstractConnection<string> {
     const command = `mongosh "${this.db}" --quiet --eval "db.runCommand({ ping: 1 })"`;
     await this.execCommandRaw(command);
   }
-  
+
   async disconnect(): Promise<void> {
     return Promise.resolve();
   }
-  
+
   async query<T extends object>(query: string): Promise<QueryResult<T>> {
     const command = `mongosh "${this.db}" --quiet --eval '${query}'`;
     const output = await this.execCommandRaw(command);
@@ -24,7 +24,11 @@ class MongoConnection extends AbstractConnection<string> {
 
     try {
       const parsed = JSON.parse(output);
-      if (parsed && typeof parsed === "object" && parsed.hasOwnProperty("rows")) {
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        parsed.hasOwnProperty('rows')
+      ) {
         result = parsed;
       } else {
         result = { rows: [parsed] as T[] };
@@ -32,24 +36,26 @@ class MongoConnection extends AbstractConnection<string> {
     } catch (error) {
       result = { rows: [] };
     }
-  
+
     if (!result.columns) {
       const columnsSet = new Set<string>();
       result.rows.forEach((row) => {
-        if (row && typeof row === "object") {
+        if (row && typeof row === 'object') {
           Object.keys(row).forEach((key) => columnsSet.add(key));
         } else {
-          columnsSet.add("value");
+          columnsSet.add('value');
         }
       });
       result.columns = Array.from(columnsSet) as Array<keyof T>;
     }
-  
+
     return result as QueryResult<T>;
   }
-  
+
   async getTables(): Promise<string[]> {
-    const result = await this.query(`print(JSON.stringify(db.getCollectionNames()))`);
+    const result = await this.query(
+      `print(JSON.stringify(db.getCollectionNames()))`,
+    );
     if (result.rows.length === 1 && Array.isArray(result.rows[0])) {
       return result.rows[0] as unknown as string[];
     }
@@ -66,18 +72,18 @@ class MongoConnection extends AbstractConnection<string> {
       throw err;
     }
   }
-  
+
   async getPaginatedTableData(
     tableName: string,
     page: number = 1,
-    pageSize: number = 400
+    pageSize: number = 400,
   ): Promise<QueryResult<any>> {
     const offset = (page - 1) * pageSize;
     // Use double quotes around the collection name so it's treated as a string literal.
     const command = `;(async () => { const result = await db.getCollection("${tableName}").find().skip(${offset}).limit(${pageSize}).toArray(); print(JSON.stringify({ rows: result })); })();`;
     return this.query(command);
   }
-  
+
   async getTableCount(tableName: string): Promise<number> {
     const command = `;(async () => {
       const count = await db.getCollection("${tableName}").countDocuments();
@@ -86,7 +92,7 @@ class MongoConnection extends AbstractConnection<string> {
     const result = await this.query<{ count: number }>(command);
     return result.rows[0].count;
   }
-  
+
   // A raw execution method that sends the command as-is.
   private execCommandRaw(query: string): Promise<string> {
     return new Promise((resolve, reject) => {

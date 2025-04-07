@@ -23,32 +23,33 @@ const EditorToolbar = ({
 }: EditorToolbarInputProps) => {
   const { connection } = useConnectionViewContext();
   const [hasContent, setHasContent] = useState(false);
-  
+
   // Check if the editor has user-entered content
   useEffect(() => {
     const checkContent = () => {
       if (!editorRef.current) return;
-      
+
       const sourceCode = editorRef.current.getValue() || '';
       const starterCodePatterns = [
-        /^\s*--\s*Type your query here\s*$/,   // SQL
-        /^\s*\/\/\s*Type your query here\s*$/,  // JavaScript
-        /^\s*Type your query here\s*$/         // Plaintext
+        /^\s*--\s*Type your query here\s*$/, // SQL
+        /^\s*\/\/\s*Type your query here\s*$/, // JavaScript
+        /^\s*Type your query here\s*$/, // Plaintext
       ];
-      
+
       // Check if content is empty or just contains starter code
-      const isEmpty = !sourceCode.trim() || 
-                      starterCodePatterns.some(pattern => pattern.test(sourceCode));
-      
+      const isEmpty =
+        !sourceCode.trim() ||
+        starterCodePatterns.some((pattern) => pattern.test(sourceCode));
+
       setHasContent(!isEmpty);
     };
-    
+
     // Initial check
     checkContent();
-    
+
     // Set up listener for content changes
     const interval = setInterval(checkContent, 300);
-    
+
     return () => {
       clearInterval(interval);
     };
@@ -64,24 +65,24 @@ const EditorToolbar = ({
   };
 
   return (
-    <div className="flex justify-end mt-2 mr-3 mb-2">
+    <div className='mt-2 mr-3 mb-2 flex justify-end'>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button 
-            variant='default' 
+          <Button
+            variant='default'
             size='sm'
-            className="h-8 px-3.5 py-0 min-w-[75px] bg-background border border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:bg-gray-200 disabled:text-gray-600 disabled:border-gray-400 disabled:shadow-inner disabled:cursor-not-allowed"
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-8 min-w-[75px] border px-3.5 py-0 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
             onClick={runQuery}
             disabled={!hasContent}
           >
-            <span className="flex items-center">
+            <span className='flex items-center'>
               <Play size={12} strokeWidth={2} />
-              <span className="font-semibold ml-1.5">Run</span>
+              <span className='ml-1.5 font-semibold'>Run</span>
             </span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className="font-semibold">Execute Query (Ctrl+Enter)</span>
+          <span className='font-semibold'>Execute Query (Ctrl+Enter)</span>
         </TooltipContent>
       </Tooltip>
     </div>

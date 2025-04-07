@@ -40,9 +40,12 @@ const createWindow = () => {
 
   // Register IPC controllers
   const registeredChannels: string[] = [];
-  
+
   // Check if handlers are already registered to avoid duplicates
-  const registerHandler = (channelName: string, handler: (...args: any[]) => any) => {
+  const registerHandler = (
+    channelName: string,
+    handler: (...args: any[]) => any,
+  ) => {
     try {
       // Try to register the handler
       ipcMain.handle(channelName, handler);
@@ -56,7 +59,7 @@ const createWindow = () => {
       registeredChannels.push(channelName);
     }
   };
-  
+
   for (const controllerName in controllers) {
     const controller = controllers[controllerName as keyof typeof controllers];
     const controllerMethods = Object.getOwnPropertyNames(
@@ -67,7 +70,7 @@ const createWindow = () => {
 
     for (const methodName of controllerMethods) {
       const channelName = `${controllerName}:${methodName}`;
-      
+
       registerHandler(channelName, (...args: unknown[]) => {
         const method = Reflect.get(controllerInstance, methodName);
         return Reflect.apply(method, controllerInstance, args);
@@ -96,7 +99,7 @@ app.on('window-all-closed', () => {
   // Clean up all IPC handlers when windows are closed
   // This prevents duplicate handler registration issues on reopening
   ipcMain.removeAllListeners();
-  
+
   // Get all registered channels and remove their handlers
   const channels = ipcMain.eventNames();
   for (const channel of channels) {
@@ -104,7 +107,7 @@ app.on('window-all-closed', () => {
       ipcMain.removeHandler(channel);
     }
   }
-  
+
   if (process.platform !== 'darwin') {
     app.quit();
   }

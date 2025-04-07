@@ -15,32 +15,24 @@ function QueryResultTable({ query }: QueryResultTableProps) {
       .then((r) => {
         // Add a safety check to ensure rows is always an array
         if (!r.rows || !Array.isArray(r.rows)) {
-          console.error("Invalid result format. Rows is not an array:", r);
+          console.error('Invalid result format. Rows is not an array:', r);
           r.rows = r.rows ? [r.rows] : [];
         }
         setResult(r);
         setError(null);
       })
-      .catch(err => {
-        console.error("Error fetching query result:", err);
-        setError(err.message || "An error occurred while fetching data");
+      .catch((err) => {
+        console.error('Error fetching query result:', err);
+        setError(err.message || 'An error occurred while fetching data');
       });
   }, [query]);
 
   if (error) {
-    return (
-      <div className="p-4 text-red-600">
-        Error: {error}
-      </div>
-    );
+    return <div className='p-4 text-red-600'>Error: {error}</div>;
   }
 
   if (result === undefined) {
-    return (
-      <div className="p-4 text-gray-500">
-        Loading...
-      </div>
-    );
+    return <div className='p-4 text-gray-500'>Loading...</div>;
   }
 
   // Safety check - ensure rows is an array
@@ -48,11 +40,7 @@ function QueryResultTable({ query }: QueryResultTableProps) {
   const columns = result.columns || [];
 
   if (rows.length === 0) {
-    return (
-      <div className="p-4 text-gray-500">
-        No data available
-      </div>
-    );
+    return <div className='p-4 text-gray-500'>No data available</div>;
   }
 
   return (
@@ -78,7 +66,9 @@ function QueryResultTable({ query }: QueryResultTableProps) {
                   key={columnIndex}
                   className='border-border h-min max-w-80 truncate border px-3 py-2 text-sm'
                 >
-                  {row && typeof row === 'object' ? String(row[column] || '') : String(row)}
+                  {row && typeof row === 'object'
+                    ? String(row[column] || '')
+                    : String(row)}
                 </td>
               ))}
             </tr>

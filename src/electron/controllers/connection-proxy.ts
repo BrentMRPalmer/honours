@@ -16,7 +16,7 @@ class ConnectionProxy extends AbstractController {
     if (this.openConnections.has(id)) {
       return false;
     }
-    
+
     try {
       switch (driver) {
         case 'sqlite': {
@@ -27,19 +27,28 @@ class ConnectionProxy extends AbstractController {
         case 'postgresql': {
           // Mock implementation for PostgreSQL
           console.log('Creating PostgreSQL connection (mock):', config);
-          this.openConnections.set(id, new SqliteConnection(new SqliteDatabase(':memory:')));
+          this.openConnections.set(
+            id,
+            new SqliteConnection(new SqliteDatabase(':memory:')),
+          );
           break;
         }
         case 'mysql': {
           // Mock implementation for MySQL
           console.log('Creating MySQL connection (mock):', config);
-          this.openConnections.set(id, new SqliteConnection(new SqliteDatabase(':memory:')));
+          this.openConnections.set(
+            id,
+            new SqliteConnection(new SqliteDatabase(':memory:')),
+          );
           break;
         }
         case 'maria': {
           // Mock implementation for MariaDB
           console.log('Creating MariaDB connection (mock):', config);
-          this.openConnections.set(id, new SqliteConnection(new SqliteDatabase(':memory:')));
+          this.openConnections.set(
+            id,
+            new SqliteConnection(new SqliteDatabase(':memory:')),
+          );
           break;
         }
         case 'mongo': {
@@ -61,20 +70,20 @@ class ConnectionProxy extends AbstractController {
           // Real Redis implementation
           // Format proper Redis URI according to redis-cli standard
           let redisUri = `redis://`;
-          
+
           // Add auth if password exists
           if (config.password && config.password.trim() !== '') {
             redisUri += `${encodeURIComponent(config.password)}@`;
           }
-          
+
           // Add host and port
           redisUri += `${config.host}:${config.port}`;
-          
+
           // Add database if specified
           if (config.database !== undefined) {
             redisUri += `/${config.database}`;
           }
-          
+
           console.log(`Creating Redis connection with URI: ${redisUri}`);
           try {
             const redisConnection = new RedisConnection(redisUri);
@@ -91,11 +100,13 @@ class ConnectionProxy extends AbstractController {
           throw new Error(`Unsupported database driver: ${driver}`);
         }
       }
-      
+
       return true;
     } catch (error) {
       console.error(`Error creating ${driver} connection:`, error);
-      throw new Error(`Failed to create ${driver} connection: ${error.message}`);
+      throw new Error(
+        `Failed to create ${driver} connection: ${error.message}`,
+      );
     }
   }
 
@@ -152,7 +163,10 @@ class ConnectionProxy extends AbstractController {
     }
   }
 
-  async testConnection(_: IpcEvent, { driver, config }: Omit<Connection, 'id' | 'name'>) {
+  async testConnection(
+    _: IpcEvent,
+    { driver, config }: Omit<Connection, 'id' | 'name'>,
+  ) {
     try {
       // For now, we'll just return success for all drivers
       // In a real implementation, we would attempt to connect using the specified driver and config
@@ -179,9 +193,9 @@ class ConnectionProxy extends AbstractController {
             await mongoConnection.connect();
           } catch (error) {
             console.error(`Error testing MongoDB connection:`, error);
-            return { 
-              success: false, 
-              message: `MongoDB connection failed: ${error.message}` 
+            return {
+              success: false,
+              message: `MongoDB connection failed: ${error.message}`,
             };
           }
           break;
@@ -194,9 +208,9 @@ class ConnectionProxy extends AbstractController {
             await redisConnection.connect();
           } catch (error) {
             console.error(`Error testing Redis connection:`, error);
-            return { 
-              success: false, 
-              message: `Redis connection failed: ${error.message}` 
+            return {
+              success: false,
+              message: `Redis connection failed: ${error.message}`,
             };
           }
           break;
@@ -205,13 +219,13 @@ class ConnectionProxy extends AbstractController {
           throw new Error(`Unsupported database driver: ${driver}`);
         }
       }
-      
+
       return { success: true, message: 'Connection successful' };
     } catch (error) {
       console.error(`Error testing ${driver} connection:`, error);
-      return { 
-        success: false, 
-        message: `Connection failed: ${error.message}` 
+      return {
+        success: false,
+        message: `Connection failed: ${error.message}`,
       };
     }
   }
