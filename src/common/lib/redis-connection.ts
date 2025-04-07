@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -231,15 +231,9 @@ return cjson.encode({ key = "${key}", value = v })
       const pattern = trimmed.substring(5).trim();
       
       // Build a Lua script that executes KEYS and returns the result
-      let luaScript;
-      if (process.platform === 'win32') {
-        // Simpler approach for Windows
-        luaScript = `local pattern = "${pattern.replace(/"/g, '\\"')}"\n`;
-        luaScript += `return redis.call("KEYS", pattern)`;
-      } else {
-        // Standard approach for Mac
-        luaScript = `return redis.call("KEYS", "${pattern.replace(/"/g, '\\"')}")`;
-      }
+      // Use the same reliable approach for all platforms
+      const escapedPattern = pattern.replace(/"/g, '\\"').replace(/\\/g, '\\\\');
+      const luaScript = `local pattern = "${escapedPattern}"\nreturn redis.call("KEYS", pattern)`;
       console.log("KEYS as Lua script:", luaScript);
       
       // Execute using the proven eval approach
@@ -284,23 +278,65 @@ return cjson.encode({ key = "${key}", value = v })
     const command = parts[0];
     const args = parts.slice(1);
     
-    // Build a Lua script that executes the command and returns the result
-    // On Windows, we need to be extra careful with string formatting
-    let luaScript;
-    if (process.platform === 'win32') {
-      // On Windows, use a simpler approach with fewer quotes and escapes
-      luaScript = `local args = {}\n`;
-      if (args.length > 0) {
-        args.forEach((arg, index) => {
-          // For Windows, avoid complex escaping by using format
-          luaScript += `args[${index+1}] = "${arg.replace(/"/g, '\\"')}"\n`;
-        });
+    // Use the same Lua approach for all commands
+    if (command.toUpperCase() === 'SET' && args.length >= 2) {
+      // For SET, we know the key and value
+      const key = args[0].replace(/"/g, '\\"');
+      const value = args[1].replace(/"/g, '\\"');
+      
+      // Create an extremely simple Lua script for SET - with proper escaping
+      const setScript = `redis.call("SET", "${key}", "${value}")
+return "OK"`;
+      
+      try {
+        const output = await execRedisEval(this.db, setScript);
+        return {
+          rows: [{ key: 'result', value: output } as unknown as T],
+          columns: ['key', 'value']
+        } as QueryResult<T>;
+      } catch (error) {
+        console.error("Error executing Redis SET command:", error);
+        return {
+          rows: [{ key: 'error', value: `Failed to execute SET: ${error.message}` } as unknown as T],
+          columns: ['key', 'value']
+        } as QueryResult<T>;
       }
-      luaScript += `return redis.call("${command.toUpperCase()}"${args.length > 0 ? ', unpack(args)' : ''})`;
-    } else {
-      // On Mac, the original approach works fine
-      luaScript = `return redis.call("${command.toUpperCase()}"${args.length > 0 ? ', ' : ''}${args.map(arg => `"${arg.replace(/"/g, '\\"')}"`).join(', ')})`;
     }
+    
+    // For DEL and other simple commands
+    if (command.toUpperCase() !== 'GET') {
+      try {
+        // For DEL and other commands, create a simple Lua script with proper escaping
+        let simpleScript = `local result = redis.call("${command.toUpperCase()}"`;
+        
+        // Add each argument individually with proper escaping
+        for (const arg of args) {
+          const escapedArg = arg.replace(/"/g, '\\"').replace(/\\/g, '\\\\');
+          simpleScript += `, "${escapedArg}"`;
+        }
+        
+        // Close the call and return as string
+        simpleScript += `)\nreturn tostring(result)`;
+        
+        console.log("Simple Lua script:", simpleScript);
+        
+        const output = await execRedisEval(this.db, simpleScript);
+        return {
+          rows: [{ key: 'result', value: output } as unknown as T],
+          columns: ['key', 'value']
+        } as QueryResult<T>;
+      } catch (error) {
+        console.error(`Error executing Redis ${command} command:`, error);
+        return {
+          rows: [{ key: 'error', value: `Failed to execute ${command}: ${error.message}` } as unknown as T],
+          columns: ['key', 'value']
+        } as QueryResult<T>;
+      }
+    }
+    
+    // For GET, use the same approach with proper escaping
+    const escapedKey = args[0].replace(/"/g, '\\"').replace(/\\/g, '\\\\');
+    const luaScript = `return redis.call("GET", "${escapedKey}")`;
     console.log("Command as Lua script:", luaScript);
     
     // Execute using the proven eval approach
