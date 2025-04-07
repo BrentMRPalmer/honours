@@ -274,7 +274,26 @@ return cjson.encode({ key = "${key}", value = v })
 
     // For all other commands, convert to Lua script and use the working eval approach
     // Parse the command to get the command name and arguments
-    const parts = trimmed.split(/\s+/);
+    // Parse command and arguments properly handling quoted strings
+    // This regex splits by spaces but keeps quoted strings together
+    const parseCommand = (input: string) => {
+      const regex = /("[^"]*"|\S+)/g;
+      const matches = [];
+      let match;
+      
+      while ((match = regex.exec(input)) !== null) {
+        // Remove surrounding quotes but keep the content
+        let arg = match[0];
+        if (arg.startsWith('"') && arg.endsWith('"')) {
+          arg = arg.slice(1, -1);
+        }
+        matches.push(arg);
+      }
+      
+      return matches;
+    };
+    
+    const parts = parseCommand(trimmed);
     const command = parts[0];
     const args = parts.slice(1);
     
