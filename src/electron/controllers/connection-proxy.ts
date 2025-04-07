@@ -201,7 +201,7 @@ class ConnectionProxy extends AbstractController {
         case 'redis': {
           // Real Redis connection test
           try {
-            const redisUri = `redis://${config.password ? `:${config.password}@` : ''}${config.host}:${config.port}${config.database !== undefined ? `/${config.database}` : ''}`;
+            const redisUri = `redis://${config.password ? `${encodeURIComponent(config.password)}@` : ''}${config.host}:${config.port}${config.database !== undefined ? `/${config.database}` : ''}`;
             const redisConnection = new RedisConnection(redisUri);
             await redisConnection.connect();
           } catch (error) {
