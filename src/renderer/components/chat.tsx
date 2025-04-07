@@ -76,10 +76,18 @@ function Chat() {
             <SelectItem value='openrouter/quasar-alpha'>
               Quasar Alpha
             </SelectItem>
-            <SelectItem value='google/gemini-2.5-pro-exp-03-25:free'>
-              Gemini 2.5 Pro Experimental
+            <SelectItem value='openai/gpt-4o-mini'>
+              GPT-4o mini
             </SelectItem>
-            <SelectItem value='rekaai/reka-flash-3:free'>reka</SelectItem>
+            <SelectItem value='anthropic/claude-3.5-haiku'>
+              Claude 3.5 Haiku
+            </SelectItem>
+            <SelectItem value='deepseek/deepseek-chat-v3-0324'>
+              DeepSeek V3
+            </SelectItem>
+            <SelectItem value='mistral/ministral-8b'>
+              Ministral-8b
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>

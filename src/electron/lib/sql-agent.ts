@@ -19,6 +19,7 @@ function createSqlAgent(
     apiKey: process.env['OPENROUTER_API_KEY'] as string,
     baseURL: 'https://openrouter.ai/api/v1',
     model: selectedModel,
+    temperature: 0.0
   });
 
   async function runQuery({ query }: { query: string }) {
