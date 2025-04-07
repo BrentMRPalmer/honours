@@ -66,17 +66,43 @@ class RedisConnection extends AbstractConnection<string> {
         const luaScript = `local v = redis.call("GET", "${key}"); return cjson.encode({ key = "${key}", value = v })`;
         
         // Create command with our helper function
-        const command = buildRedisCommand(this.db, luaScript, true) + ' 0'; // Add the 0 arg for EVAL
+        let command = "";
+        const isWindows = process.platform === 'win32';
+        
+        if (isWindows) {
+          // On Windows, we need to handle the arguments differently
+          const escapedScript = luaScript.replace(/"/g, '\\"');
+          command = `redis-cli -u "${this.db}" --raw EVAL "${escapedScript}" 0`;
+        } else {
+          // On Unix/Mac
+          command = `redis-cli -u "${this.db}" --raw EVAL '${luaScript}' 0`;
+        }
         
         const output = await this.execCommandRaw(command);
         try {
-          const parsed = JSON.parse(output);
+          // Check for Redis error messages
+          if (output.startsWith('ERR') || output.startsWith('WRONGTYPE')) {
+            console.error("Redis error:", output);
+            return { 
+              rows: [{ key: 'error', value: output } as unknown as T],
+              columns: ['key', 'value'],
+            } as QueryResult<T>;
+          }
+          
+          // Clean the output string to handle potential Windows line ending issues
+          const cleanedOutput = output.trim().replace(/\r/g, '');
+          const parsed = JSON.parse(cleanedOutput);
+          
           return {
             rows: [parsed],
             columns: ['key', 'value'],
           } as QueryResult<T>;
         } catch (error) {
-          return { rows: [], columns: ['key', 'value'] } as QueryResult<T>;
+          console.error("Error parsing Redis GET output:", error, "Raw output:", output);
+          return { 
+            rows: [{ key: 'error', value: `Failed to parse response: ${output}` } as unknown as T],
+            columns: ['key', 'value'] 
+          } as QueryResult<T>;
         }
       }
     }
@@ -178,18 +204,40 @@ for i = offset+1, math.min(offset+limit, #keys) do
 end
 return cjson.encode(result)`;
 
-    // Create command with our helper function and add arguments
-    const command = buildRedisCommand(this.db, luaScript, true) + ` 0 ${offset} ${pageSize}`;
+    // Create command with our helper function
+    let command = "";
+    const isWindows = process.platform === 'win32';
+    
+    if (isWindows) {
+      // On Windows, we need to handle the arguments differently
+      const escapedScript = luaScript.replace(/"/g, '\\"');
+      command = `redis-cli -u "${this.db}" --raw EVAL "${escapedScript}" 0 ${offset} ${pageSize}`;
+    } else {
+      // On Unix/Mac
+      command = `redis-cli -u "${this.db}" --raw EVAL '${luaScript}' 0 ${offset} ${pageSize}`;
+    }
     
     const output = await this.execCommandRaw(command);
     try {
+      // Check for Redis error messages
+      if (output.startsWith('ERR') || output.startsWith('WRONGTYPE')) {
+        console.error("Redis error:", output);
+        return { 
+          rows: [{ key: 'error', value: output }],
+          columns: ['key', 'value']
+        };
+      }
+      
       // Clean the output string to handle potential Windows line ending issues
       const cleanedOutput = output.trim().replace(/\r/g, '');
       const rows = JSON.parse(cleanedOutput);
       return { rows, columns: ['key', 'value'] };
     } catch (error) {
       console.error("Error parsing Redis Lua script output:", error, "Raw output:", output);
-      return { rows: [], columns: ['key', 'value'] };
+      return { 
+        rows: [{ key: 'error', value: `Failed to parse response: ${output}` }],
+        columns: ['key', 'value'] 
+      };
     }
   }
 
