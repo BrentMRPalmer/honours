@@ -26,7 +26,8 @@ const buildRedisCommand = (
   } else {
     // Handle regular Redis commands
     if (isWindows) {
-      // Windows: Escape any double quotes in the query
+      // On Windows, don't wrap the command in quotes to avoid syntax errors
+      // Just escape any quotes in the command but keep the command arguments separate
       const escapedCommand = command.replace(/"/g, '\\"');
       return `redis-cli -u "${connectionUri}" --raw ${escapedCommand}`;
     } else {
@@ -74,24 +75,36 @@ const execRedisEval = (
       
       // Use exec which is more consistent across platforms
       exec(command, (error, stdout, stderr) => {
-        // Clean up temp file regardless of outcome
-        try {
-          fs.unlinkSync(tempFile);
-        } catch (e) {
-          console.warn('Failed to delete temporary Lua script file:', e);
-        }
+        // Create a helper to run with a delay to avoid race conditions
+        const safelyDeleteFile = () => {
+          // Use setTimeout to ensure the file is fully released before deletion
+          setTimeout(() => {
+            try {
+              if (fs.existsSync(tempFile)) {
+                fs.unlinkSync(tempFile);
+              }
+            } catch (e) {
+              // Just log the error but don't impact the result
+              console.warn('Failed to delete temporary Lua script file:', e);
+            }
+          }, 100); // Small delay to avoid race conditions
+        };
         
         if (error) {
           // Real error occurred
+          safelyDeleteFile();
           return reject(stderr || error.message);
         }
         
         // Handle redis-cli password warnings (not actual errors)
         if (stderr && stderr.trim() && !stderr.includes("Warning: Using a password")) {
           // Only reject if it's a real error, not the password warning
+          safelyDeleteFile();
           return reject(new Error(stderr.trim()));
         }
         
+        // Success case
+        safelyDeleteFile();
         resolve(stdout.trim());
       });
     } catch (error) {
