@@ -52,6 +52,26 @@ class ProxyConnection extends AbstractConnection<undefined> {
       [table],
     )) as QueryResult<object>;
   }
+  
+  async getPaginatedTableData(
+    tableName: string,
+    page: number = 1,
+    pageSize: number = 400,
+  ) {
+    return (await window.ConnectionProxy.forwardCall(
+      this.#connection.id,
+      'getPaginatedTableData',
+      [tableName, page, pageSize],
+    )) as QueryResult<object>;
+  }
+
+  async getTableCount(tableName: string) {
+    return (await window.ConnectionProxy.forwardCall(
+      this.#connection.id,
+      'getTableCount',
+      [tableName],
+    )) as number;
+  }
 }
 
 export { ProxyConnection };

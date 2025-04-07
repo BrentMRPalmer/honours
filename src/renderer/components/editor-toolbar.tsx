@@ -8,6 +8,7 @@ import { Play } from 'lucide-react';
 import { editor } from 'monaco-editor';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
 import { QueryResult } from '@/common/types';
+import { useEffect, useState } from 'react';
 
 interface EditorToolbarInputProps {
   editorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
@@ -21,6 +22,37 @@ const EditorToolbar = ({
   setQueryResult,
 }: EditorToolbarInputProps) => {
   const { connection } = useConnectionViewContext();
+  const [hasContent, setHasContent] = useState(false);
+  
+  // Check if the editor has user-entered content
+  useEffect(() => {
+    const checkContent = () => {
+      if (!editorRef.current) return;
+      
+      const sourceCode = editorRef.current.getValue() || '';
+      const starterCodePatterns = [
+        /^\s*--\s*Type your query here\s*$/,   // SQL
+        /^\s*\/\/\s*Type your query here\s*$/,  // JavaScript
+        /^\s*Type your query here\s*$/         // Plaintext
+      ];
+      
+      // Check if content is empty or just contains starter code
+      const isEmpty = !sourceCode.trim() || 
+                      starterCodePatterns.some(pattern => pattern.test(sourceCode));
+      
+      setHasContent(!isEmpty);
+    };
+    
+    // Initial check
+    checkContent();
+    
+    // Set up listener for content changes
+    const interval = setInterval(checkContent, 300);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, [editorRef]);
 
   const runQuery = async () => {
     if (!editorRef.current) return;
@@ -32,17 +64,24 @@ const EditorToolbar = ({
   };
 
   return (
-    <div>
-      <Tooltip disableHoverableContent>
-        <TooltipTrigger asChild onClick={runQuery}>
-          <Button variant='ghost' size='icon' asChild>
-            <div>
-              <Play strokeWidth={1.5} />
-            </div>
+    <div className="flex justify-end mt-2 mr-3 mb-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button 
+            variant='default' 
+            size='sm'
+            className="h-8 px-3.5 py-0 min-w-[75px] bg-background border border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:bg-gray-200 disabled:text-gray-600 disabled:border-gray-400 disabled:shadow-inner disabled:cursor-not-allowed"
+            onClick={runQuery}
+            disabled={!hasContent}
+          >
+            <span className="flex items-center">
+              <Play size={12} strokeWidth={2} />
+              <span className="font-semibold ml-1.5">Run</span>
+            </span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          Run
+          <span className="font-semibold">Execute Query (Ctrl+Enter)</span>
         </TooltipContent>
       </Tooltip>
     </div>

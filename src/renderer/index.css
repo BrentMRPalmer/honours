@@ -23,7 +23,7 @@
   --accent-foreground: hsl(0 0% 9%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 89.8%);
+  --border: hsl(0 0% 80%);
   --input: hsl(0 0% 89.8%);
   --ring: hsl(0 0% 3.9%);
   --chart-1: hsl(12 76% 61%);
@@ -51,7 +51,7 @@
   --accent-foreground: hsl(0 0% 98%);
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 14.9%);
+  --border: hsl(0 0% 25%);
   --input: hsl(0 0% 14.9%);
   --ring: hsl(0 0% 83.1%);
   --chart-1: hsl(220 70% 50%);
@@ -102,5 +102,84 @@
   }
   #root {
     @apply h-full w-full;
+  }
+  
+  /* Slightly darker borders for Allotment panes */
+  :root {
+    --separator-border: rgba(100, 100, 100, 0.4);
+  }
+  
+  /* Make table and UI element borders darker */
+  .border-border {
+    border-color: var(--border);
+    border-width: 1px; /* Ensure borders are visible */
+  }
+  
+  /* Simple border for tabs - no top border for connection view tabs */
+  [role="tab"] {
+    border: 1px solid var(--border);
+    box-sizing: border-box;
+  }
+
+  /* Remove top and bottom borders from tabs in the connection view to avoid double borders */
+  .border.rounded-md [role="tab"] {
+    border-top: none;
+  }
+  
+  /* Fix borders for tabs in the main connection view */
+  div[class*="SortableList"] [role="tab"],
+  .border-b-0[role="tablist"] {
+    border-bottom: none;
+  }
+  
+  /* Remove double border below tabs */
+  .border-b-0[role="tablist"],
+  .no-bottom-border [role="tablist"] {
+    border-bottom: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Ensure there's no border on the tab list wrapper */
+  .no-bottom-border::after {
+    display: none !important;
+  }
+  
+  /* Ensure tabs in TabsList are completely flush with left edge */
+  .flex.h-full.overflow-hidden > [role="tablist"],
+  .ml-0 > [role="tablist"] {
+    margin-left: -1px;
+  }
+  
+  /* Connection list styles */
+  [class*="SortableList"] {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  /* Remove left border from tabs in connection list and keep subtle right border */
+  [role="tablist"].p-0 [role="tab"] {
+    border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-right-color: rgba(0, 0, 0, 0.1);
+    border-top-color: rgba(0, 0, 0, 0.1);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Make TabsList integrate with the layout */
+  [role="tablist"].p-0 {
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  
+  /* Increase table border contrast but remove top borders from first row */
+  table, th, td {
+    border-color: var(--border) !important;
+    border-width: 1px !important;
+  }
+  
+  /* Remove top border from table headers to avoid double border */
+  thead tr:first-child th {
+    border-top: none !important;
   }
 }
