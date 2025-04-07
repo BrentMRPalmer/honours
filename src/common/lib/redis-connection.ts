@@ -86,7 +86,8 @@ class RedisConnection extends AbstractConnection<string> {
       
       const output = await this.execCommandRaw(command);
       // Split the output by newline and filter out empty lines.
-      const keys = output.split('\n').filter((key) => key.trim() !== '');
+      // Use RegExp to handle both Windows (\r\n) and Unix (\n) line endings
+      const keys = output.split(/\r?\n/).filter((key) => key.trim() !== '');
       // Map each key to an object with key and a null value (or you can adjust as needed).
       const rows = keys.map((key) => ({ key, value: null }));
       return { rows, columns: ['key', 'value'] } as QueryResult<T>;
@@ -113,8 +114,11 @@ class RedisConnection extends AbstractConnection<string> {
     const output = await this.execCommandRaw(command);
     let result: { rows: T[]; columns?: Array<keyof T> };
     try {
+      // Clean the output string to handle potential Windows line ending issues
+      const cleanedOutput = output.trim().replace(/\r/g, '');
+      
       // Try to parse as JSON first
-      const parsed = JSON.parse(output);
+      const parsed = JSON.parse(cleanedOutput);
       if (
         parsed &&
         typeof parsed === 'object' &&
@@ -129,7 +133,8 @@ class RedisConnection extends AbstractConnection<string> {
       // If not JSON, treat as plain text output
       if (output && output.trim()) {
         // For plain text, wrap in an object with result as value
-        result = { rows: [{ value: output } as unknown as T] };
+        const cleanedValue = output.replace(/\r/g, '');
+        result = { rows: [{ value: cleanedValue } as unknown as T] };
       } else {
         // Empty result
         result = { rows: [] };
@@ -178,9 +183,12 @@ return cjson.encode(result)`;
     
     const output = await this.execCommandRaw(command);
     try {
-      const rows = JSON.parse(output);
+      // Clean the output string to handle potential Windows line ending issues
+      const cleanedOutput = output.trim().replace(/\r/g, '');
+      const rows = JSON.parse(cleanedOutput);
       return { rows, columns: ['key', 'value'] };
     } catch (error) {
+      console.error("Error parsing Redis Lua script output:", error, "Raw output:", output);
       return { rows: [], columns: ['key', 'value'] };
     }
   }
