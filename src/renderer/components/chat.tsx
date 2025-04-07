@@ -51,6 +51,7 @@ function Chat() {
           <SelectContent>
             <SelectItem value="openrouter/quasar-alpha">Quasar Alpha</SelectItem>
             <SelectItem value="google/gemini-2.5-pro-exp-03-25:free">Gemini 2.5 Pro Experimental</SelectItem>
+            <SelectItem value="rekaai/reka-flash-3:free">reka</SelectItem>
           </SelectContent>
         </Select>
       </div>

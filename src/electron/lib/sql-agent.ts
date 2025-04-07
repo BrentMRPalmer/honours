@@ -20,6 +20,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   });
 
   async function runQuery({ query }: { query: string }) {
+    console.log("Running runQuery tool")
     return await connection
       .query(query)
       .then((result) =>
@@ -28,6 +29,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   }
 
   async function getTables() {
+    console.log("Running get tables tool")
     return await connection
       .getTables()
       .then((result) =>
@@ -36,6 +38,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   }
 
   async function getTableSchema({ table }: { table: string }) {
+    console.log("Running get table schema tool")
     return await connection
       .getTableSchema(table)
       .then((result) =>
@@ -44,6 +47,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   }
 
   async function getTableFirst5Rows({ table }: { table: string }) {
+    console.log("Running get table five rows tool")
     return await connection
       .query(`SELECT * FROM ${table} LIMIT 5;`)
       .then((result) =>
