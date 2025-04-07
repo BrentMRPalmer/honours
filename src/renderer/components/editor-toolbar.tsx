@@ -152,8 +152,8 @@ const EditorToolbar = ({
             disabled={!hasContent}
           >
             <span className='flex items-center'>
-              <Play size={12} strokeWidth={2} />
-              <span className='ml-1.5 font-semibold'>Run</span>
+              <Play size={14} strokeWidth={2} />
+              <span className='ml-1.5 font-semibold'>Run Query</span>
             </span>
           </Button>
         </TooltipTrigger>
@@ -163,28 +163,42 @@ const EditorToolbar = ({
       </Tooltip>
 
       <Tooltip>
-        <TooltipTrigger asChild onClick={runLine}>
-          <Button variant='ghost' size='icon' asChild>
-            <div>
-              <PlaySquare strokeWidth={1.5} />
-            </div>
+        <TooltipTrigger asChild>
+          <Button
+            variant='default'
+            size='sm'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-8 ml-2 px-3 py-0 border disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            onClick={runLine}
+            disabled={!hasContent}
+          >
+            <span className='flex items-center'>
+              <PlaySquare size={14} strokeWidth={2} />
+              <span className='ml-1.5 font-semibold text-xs'>Run Line</span>
+            </span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          Run Current Line
+          <span className='font-semibold'>Run Current Line</span>
         </TooltipContent>
       </Tooltip>
 
       <Tooltip>
-        <TooltipTrigger asChild onClick={runSelection}>
-          <Button variant='ghost' size='icon' asChild>
-            <div>
-              <PlayCircle strokeWidth={1.5} />
-            </div>
+        <TooltipTrigger asChild>
+          <Button
+            variant='default'
+            size='sm'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-8 ml-2 px-3 py-0 border disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            onClick={runSelection}
+            disabled={!hasContent}
+          >
+            <span className='flex items-center'>
+              <PlayCircle size={14} strokeWidth={2} />
+              <span className='ml-1.5 font-semibold text-xs'>Run Selected</span>
+            </span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          Run Highlighted Query
+          <span className='font-semibold'>Run Highlighted Query</span>
         </TooltipContent>
       </Tooltip>
     </div>
