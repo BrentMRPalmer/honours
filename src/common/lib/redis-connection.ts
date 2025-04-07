@@ -6,7 +6,9 @@ import * as path from 'path';
 import { AbstractConnection } from '@/common/lib/abstract-connection';
 import type { ConnectionDriver, QueryResult } from '@/common/types';
 
-// Helper function to build platform-specific Redis commands
+// We're now using the Lua script approach for all commands
+
+// Helper function to build platform-specific Redis commands (legacy)
 const buildRedisCommand = (
   connectionUri: string,
   command: string,
@@ -121,12 +123,20 @@ class RedisConnection extends AbstractConnection<string> {
   async connect(): Promise<void> {
     console.log(`Redis connection string: ${this.db}`);
     
-    const command = buildRedisCommand(this.db, 'PING');
-    console.log(`Testing Redis connection: ${command}`);
-
-    const result = await this.execCommandRaw(command);
-    if (result !== 'PONG') {
-      throw new Error('Failed to connect to Redis');
+    try {
+      // Use the Lua script approach for the PING command
+      const luaScript = `return redis.call("PING")`;
+      console.log("PING as Lua script:", luaScript);
+      
+      const result = await execRedisEval(this.db, luaScript);
+      console.log(`Redis PING result: ${result}`);
+      
+      if (result !== 'PONG') {
+        throw new Error('Failed to connect to Redis');
+      }
+    } catch (error) {
+      console.error("Redis connection error:", error);
+      throw new Error(`Failed to connect to Redis: ${error.message}`);
     }
   }
 
@@ -203,15 +213,32 @@ return cjson.encode({ key = "${key}", value = v })
     }
 
     if (trimmed.toUpperCase().startsWith('KEYS ')) {
-      const command = buildRedisCommand(this.db, query);
+      // Extract the pattern from the KEYS command
+      const pattern = trimmed.substring(5).trim();
       
-      const output = await this.execCommandRaw(command);
-      // Split the output by newline and filter out empty lines.
-      // Use RegExp to handle both Windows (\r\n) and Unix (\n) line endings
-      const keys = output.split(/\r?\n/).filter((key) => key.trim() !== '');
-      // Map each key to an object with key and a null value (or you can adjust as needed).
-      const rows = keys.map((key) => ({ key, value: null }));
-      return { rows, columns: ['key', 'value'] } as QueryResult<T>;
+      // Build a Lua script that executes KEYS and returns the result
+      const luaScript = `return redis.call("KEYS", "${pattern.replace(/"/g, '\\"')}")`;
+      console.log("KEYS as Lua script:", luaScript);
+      
+      // Execute using the proven eval approach
+      const output = await execRedisEval(this.db, luaScript);
+      
+      // Process the output - it will be a JSON array from Lua
+      try {
+        // Clean and parse the output
+        const cleanedOutput = output.trim().replace(/\r/g, '');
+        const keys = JSON.parse(cleanedOutput);
+        
+        // Map each key to an object with key and a null value
+        const rows = keys.map((key) => ({ key, value: null }));
+        return { rows, columns: ['key', 'value'] } as QueryResult<T>;
+      } catch (error) {
+        console.error("Error parsing KEYS response:", error);
+        // If parsing fails, use the old approach as fallback
+        const keys = output.split(/\r?\n/).filter((key) => key.trim() !== '');
+        const rows = keys.map((key) => ({ key, value: null }));
+        return { rows, columns: ['key', 'value'] } as QueryResult<T>;
+      }
     }
 
     const listingCommands = ['HGETALL', 'SCAN', 'LRANGE', 'SMEMBERS', 'ZRANGE'];
@@ -229,10 +256,18 @@ return cjson.encode({ key = "${key}", value = v })
       }
     }
 
-    // For all other commands, simply execute them raw.
-    const command = buildRedisCommand(this.db, query);
+    // For all other commands, convert to Lua script and use the working eval approach
+    // Parse the command to get the command name and arguments
+    const parts = trimmed.split(/\s+/);
+    const command = parts[0];
+    const args = parts.slice(1);
     
-    const output = await this.execCommandRaw(command);
+    // Build a Lua script that executes the command and returns the result
+    const luaScript = `return redis.call("${command.toUpperCase()}"${args.length > 0 ? ', ' : ''}${args.map(arg => `"${arg.replace(/"/g, '\\"')}"`).join(', ')})`;
+    console.log("Command as Lua script:", luaScript);
+    
+    // Execute using the proven eval approach
+    const output = await execRedisEval(this.db, luaScript);
     let result: { rows: T[]; columns?: Array<keyof T> };
     try {
       // Clean the output string to handle potential Windows line ending issues
@@ -352,12 +387,15 @@ return cjson.encode(result)
   }
 
   async getTableCount(tableName: string): Promise<number> {
-    // Use the helper function to create a platform-specific command
-    const command = buildRedisCommand(this.db, 'DBSIZE');
-    const output = await this.execCommandRaw(command);
     try {
-      return parseInt(output, 10);
+      // Use the Lua script approach for the DBSIZE command
+      const luaScript = `return redis.call("DBSIZE")`;
+      console.log("DBSIZE as Lua script:", luaScript);
+      
+      const output = await execRedisEval(this.db, luaScript);
+      return parseInt(output, 10) || 0;
     } catch (error) {
+      console.error("Error getting Redis DB size:", error);
       return 0;
     }
   }
