@@ -52,22 +52,34 @@ const execRedisEval = (
     try {
       // Write to file approach - more reliable across platforms
       // Use path.join for proper cross-platform path handling
-      const tempFile = path.join(os.tmpdir(), `redis-lua-${Date.now()}.lua`);
-      fs.writeFileSync(tempFile, luaScript, 'utf8');
+      const timestamp = Date.now();
+      const tempFile = path.join(os.tmpdir(), `redis-lua-${timestamp}.lua`);
+      
+      // For Windows, make extra sure we're using proper line endings
+      const scriptToWrite = process.platform === 'win32'
+        ? luaScript.replace(/\r?\n/g, '\r\n')  // Ensure Windows CRLF line endings
+        : luaScript;
+        
+      fs.writeFileSync(tempFile, scriptToWrite, 'utf8');
       
       // Build command - explicitly load script from file
       // Construct the command differently based on platform
       let command;
       if (process.platform === 'win32') {
-        // On Windows, we pass arguments differently
-        command = `redis-cli -u "${connectionUri}" --raw --eval ${tempFile} 0`;
-        // Add each argument individually to avoid space parsing issues
+        // On Windows, be very careful with paths and quoting
+        // Properly escape backslashes in the path for Windows
+        const escapedPath = tempFile.replace(/\\/g, '\\\\');
+        
+        // Construct a command with minimal quoting
+        command = `redis-cli -u "${connectionUri}" --raw --eval "${escapedPath}" 0`;
+        
+        // Add each argument individually, minimizing additional quoting
         if (args.length > 0) {
-          command += ' ' + args.map(arg => `"${arg}"`).join(' ');
+          command += ' ' + args.join(' ');
         }
       } else {
         // On Mac/Unix, this works fine
-        command = `redis-cli -u "${connectionUri}" --raw --eval ${tempFile} 0`;
+        command = `redis-cli -u "${connectionUri}" --raw --eval '${tempFile}' 0`;
         if (args.length > 0) {
           command += ' ' + args.join(' ');
         }
@@ -125,7 +137,9 @@ class RedisConnection extends AbstractConnection<string> {
     
     try {
       // Use the Lua script approach for the PING command
-      const luaScript = `return redis.call("PING")`;
+      const luaScript = process.platform === 'win32'
+        ? `return redis.call("PING")`
+        : `return redis.call("PING")`;
       console.log("PING as Lua script:", luaScript);
       
       const result = await execRedisEval(this.db, luaScript);
@@ -217,7 +231,15 @@ return cjson.encode({ key = "${key}", value = v })
       const pattern = trimmed.substring(5).trim();
       
       // Build a Lua script that executes KEYS and returns the result
-      const luaScript = `return redis.call("KEYS", "${pattern.replace(/"/g, '\\"')}")`;
+      let luaScript;
+      if (process.platform === 'win32') {
+        // Simpler approach for Windows
+        luaScript = `local pattern = "${pattern.replace(/"/g, '\\"')}"\n`;
+        luaScript += `return redis.call("KEYS", pattern)`;
+      } else {
+        // Standard approach for Mac
+        luaScript = `return redis.call("KEYS", "${pattern.replace(/"/g, '\\"')}")`;
+      }
       console.log("KEYS as Lua script:", luaScript);
       
       // Execute using the proven eval approach
@@ -263,7 +285,22 @@ return cjson.encode({ key = "${key}", value = v })
     const args = parts.slice(1);
     
     // Build a Lua script that executes the command and returns the result
-    const luaScript = `return redis.call("${command.toUpperCase()}"${args.length > 0 ? ', ' : ''}${args.map(arg => `"${arg.replace(/"/g, '\\"')}"`).join(', ')})`;
+    // On Windows, we need to be extra careful with string formatting
+    let luaScript;
+    if (process.platform === 'win32') {
+      // On Windows, use a simpler approach with fewer quotes and escapes
+      luaScript = `local args = {}\n`;
+      if (args.length > 0) {
+        args.forEach((arg, index) => {
+          // For Windows, avoid complex escaping by using format
+          luaScript += `args[${index+1}] = "${arg.replace(/"/g, '\\"')}"\n`;
+        });
+      }
+      luaScript += `return redis.call("${command.toUpperCase()}"${args.length > 0 ? ', unpack(args)' : ''})`;
+    } else {
+      // On Mac, the original approach works fine
+      luaScript = `return redis.call("${command.toUpperCase()}"${args.length > 0 ? ', ' : ''}${args.map(arg => `"${arg.replace(/"/g, '\\"')}"`).join(', ')})`;
+    }
     console.log("Command as Lua script:", luaScript);
     
     // Execute using the proven eval approach
@@ -389,7 +426,9 @@ return cjson.encode(result)
   async getTableCount(tableName: string): Promise<number> {
     try {
       // Use the Lua script approach for the DBSIZE command
-      const luaScript = `return redis.call("DBSIZE")`;
+      const luaScript = process.platform === 'win32'
+        ? `return redis.call("DBSIZE")`
+        : `return redis.call("DBSIZE")`;
       console.log("DBSIZE as Lua script:", luaScript);
       
       const output = await execRedisEval(this.db, luaScript);
