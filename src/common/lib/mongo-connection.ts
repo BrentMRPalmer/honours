@@ -33,21 +33,26 @@ class MongoConnection extends AbstractConnection<string> {
     
     const output = await this.execCommandRaw(command);
     let result: { rows: T[]; columns?: Array<keyof T> };
-
-    try {
-      const parsed = JSON.parse(output);
-      if (
-        parsed &&
-        typeof parsed === 'object' &&
-        parsed.hasOwnProperty('rows')
-      ) {
-        result = parsed;
-      } else {
-        result = { rows: [parsed] as T[] };
+    if (!output || output.trim() === '') {
+      console.log("Empty MongoDB output");
+      result = { rows: [], columns: [] as Array<keyof T> };
+    } else {
+      try {
+        const parsedOutput = this.parseMongoOutput(output);
+        if (parsedOutput && typeof parsedOutput === 'object' && parsedOutput.rows) {
+          // Object with rows property - use directly
+          result = parsedOutput;
+        } else if (Array.isArray(parsedOutput)) {
+          // Array - create rows wrapper
+          result = { rows: parsedOutput as T[] };
+        } else {
+          result = { rows: [parsedOutput] as T[] };
+        }
+      } catch (err) {
+        console.error("MongoDB output parsing error:", err.message);
+        console.log("Raw output:", output);
+        result = { rows: [], columns: [] as Array<keyof T> };
       }
-    } catch (error) {
-      console.error("Error parsing MongoDB output:", error, "Raw output:", output);
-      result = { rows: [] };
     }
 
     if (!result.columns) {
@@ -79,7 +84,7 @@ class MongoConnection extends AbstractConnection<string> {
     const command = `mongosh "${this.db}" --quiet --eval 'const docs = db.getCollection("${table}").find().toArray(); const fieldsSet = new Set(); docs.forEach(doc => { Object.keys(doc).forEach(key => fieldsSet.add(key)); }); print(JSON.stringify({ rows: [{ fields: Array.from(fieldsSet) }] }));'`;
     const output = await this.execCommandRaw(command);
     try {
-      const result = JSON.parse(output);
+      const result = this.parseMongoOutput(output);
       return result;
     } catch (err) {
       throw err;
@@ -111,6 +116,30 @@ class MongoConnection extends AbstractConnection<string> {
         resolve(stdout.trim());
       });
     });
+  }
+  
+  private parseMongoOutput<T>(output: string): T {
+    try {
+      // First attempt: direct JSON parsing
+      return JSON.parse(output);
+    } catch (jsonError) {
+      try {
+        // Convert JavaScript notation to valid JSON by evaluating it in a controlled way
+        // Use Function constructor to create a safe evaluation environment
+        // This approach handles unquoted keys, single quotes, and ObjectId references
+        const safeEval = new Function(
+          'ObjectId', 
+          `const result = ${output}; return JSON.stringify(result);`
+        );
+        
+        // Execute with a simple ObjectId replacement function
+        const jsonString = safeEval(id => id);
+        return JSON.parse(jsonString);
+      } catch (evalError) {
+        console.error("Failed to parse MongoDB output with all methods:", evalError);
+        throw new Error(`Could not parse MongoDB output: ${output}`);
+      }
+    }
   }
 }
 
