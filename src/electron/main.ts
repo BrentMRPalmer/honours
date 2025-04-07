@@ -40,6 +40,26 @@ const createWindow = () => {
 
   // Register IPC controllers
   const registeredChannels: string[] = [];
+
+  // Check if handlers are already registered to avoid duplicates
+  const registerHandler = (
+    channelName: string,
+    handler: (...args: any[]) => any,
+  ) => {
+    try {
+      // Try to register the handler
+      ipcMain.handle(channelName, handler);
+      registeredChannels.push(channelName);
+    } catch (error) {
+      // If handler is already registered, remove it first then add again
+      // This ensures we're using the latest controller instances
+      console.log(`Handler for ${channelName} already exists, replacing it`);
+      ipcMain.removeHandler(channelName);
+      ipcMain.handle(channelName, handler);
+      registeredChannels.push(channelName);
+    }
+  };
+
   for (const controllerName in controllers) {
     const controller = controllers[controllerName as keyof typeof controllers];
     const controllerMethods = Object.getOwnPropertyNames(
@@ -50,16 +70,16 @@ const createWindow = () => {
 
     for (const methodName of controllerMethods) {
       const channelName = `${controllerName}:${methodName}`;
-      registeredChannels.push(channelName);
 
-      ipcMain.handle(channelName, (...args: unknown[]) => {
+      registerHandler(channelName, (...args: unknown[]) => {
         const method = Reflect.get(controllerInstance, methodName);
         return Reflect.apply(method, controllerInstance, args);
       });
     }
   }
 
-  ipcMain.handle('registered-channels', () => {
+  // Register the channel that returns all registered channels
+  registerHandler('registered-channels', () => {
     return registeredChannels;
   });
 
@@ -76,6 +96,18 @@ app.on('ready', createWindow);
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  // Clean up all IPC handlers when windows are closed
+  // This prevents duplicate handler registration issues on reopening
+  ipcMain.removeAllListeners();
+
+  // Get all registered channels and remove their handlers
+  const channels = ipcMain.eventNames();
+  for (const channel of channels) {
+    if (typeof channel === 'string' && ipcMain.listenerCount(channel) > 0) {
+      ipcMain.removeHandler(channel);
+    }
+  }
+
   if (process.platform !== 'darwin') {
     app.quit();
   }

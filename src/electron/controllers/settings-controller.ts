@@ -7,12 +7,7 @@ import type { Connection, ConnectionDriver } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
 
 interface Settings {
-  connections: {
-    id: string;
-    name: string;
-    driver: ConnectionDriver;
-    config: unknown;
-  }[];
+  connections: Connection[];
 }
 
 class SettingsController extends AbstractController {
@@ -27,50 +22,144 @@ class SettingsController extends AbstractController {
     );
   }
 
-  async #readSettingsFile() {
-    const settingsData = await fs.readFile(this.#settingsPath, 'utf-8');
-    const settings: Settings = JSON.parse(settingsData);
-    return settings;
+  async #readSettingsFile(): Promise<Settings> {
+    try {
+      const settingsData = await fs.readFile(this.#settingsPath, 'utf-8');
+      const settings: Settings = JSON.parse(settingsData);
+      return settings;
+    } catch (error) {
+      // Return default settings if file doesn't exist or is invalid
+      return { connections: [] };
+    }
   }
 
-  async #writeSettingsFile(settings: Settings) {
-    const settingsData = JSON.stringify(settings);
+  async #writeSettingsFile(settings: Settings): Promise<void> {
+    const settingsData = JSON.stringify(settings, null, 2);
     await fs.writeFile(this.#settingsPath, settingsData, 'utf-8');
   }
 
-  async getConnections() {
-    // const settings = await this.#readSettingsFile();
-    return [
-      {
-        id: '1',
-        driver: 'sqlite',
-        name: 'db1',
-        config: {
-          filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
-        },
-      },
-      {
-        id: '2',
-        driver: 'sqlite',
-        name: 'db2',
-        config: {
-          filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
-        },
-      },
-    ] as Connection[];
+  async getConnections(): Promise<Connection[]> {
+    try {
+      const settings = await this.#readSettingsFile();
+      if (settings.connections.length === 0) {
+        // Return mock connections if no connections are saved
+        return [
+          {
+            id: '1',
+            driver: 'sqlite',
+            name: 'Sample SQLite DB',
+            config: {
+              filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
+            },
+          },
+          {
+            id: '2',
+            driver: 'sqlite',
+            name: 'Another SQLite DB',
+            config: {
+              filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
+            },
+          },
+        ] as Connection[];
+      }
+      return settings.connections;
+    } catch (error) {
+      console.error('Error getting connections:', error);
+      return [];
+    }
   }
 
-  async addConnections(
+  async addConnection(
     _: IpcEvent,
     name: string,
     driver: ConnectionDriver,
     config: unknown,
-  ) {
-    const settings = await this.#readSettingsFile();
-    const connection = { id: uuidv4(), name, driver, config };
-    settings.connections.push(connection);
-    await this.#writeSettingsFile(settings);
-    return connection;
+  ): Promise<Connection> {
+    try {
+      const settings = await this.#readSettingsFile();
+      const connection = { id: uuidv4(), name, driver, config } as Connection;
+      settings.connections.push(connection);
+      await this.#writeSettingsFile(settings);
+      return connection;
+    } catch (error) {
+      console.error('Error adding connection:', error);
+      throw new Error('Failed to add connection');
+    }
+  }
+
+  async updateConnection(
+    _: IpcEvent,
+    id: string,
+    name: string,
+    driver: ConnectionDriver,
+    config: unknown,
+  ): Promise<Connection> {
+    try {
+      const settings = await this.#readSettingsFile();
+      const connectionIndex = settings.connections.findIndex(
+        (conn) => conn.id === id,
+      );
+
+      if (connectionIndex === -1) {
+        throw new Error(`Connection with id ${id} not found`);
+      }
+
+      const updatedConnection = {
+        id,
+        name,
+        driver,
+        config,
+      } as Connection;
+
+      settings.connections[connectionIndex] = updatedConnection;
+      await this.#writeSettingsFile(settings);
+
+      return updatedConnection;
+    } catch (error) {
+      console.error('Error updating connection:', error);
+      throw new Error('Failed to update connection');
+    }
+  }
+
+  async deleteConnection(_: IpcEvent, id: string): Promise<boolean> {
+    try {
+      const settings = await this.#readSettingsFile();
+      const initialLength = settings.connections.length;
+
+      settings.connections = settings.connections.filter(
+        (conn) => conn.id !== id,
+      );
+
+      if (settings.connections.length !== initialLength) {
+        await this.#writeSettingsFile(settings);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error deleting connection:', error);
+      throw new Error('Failed to delete connection');
+    }
+  }
+
+  async searchConnections(_: IpcEvent, query: string): Promise<Connection[]> {
+    try {
+      const settings = await this.#readSettingsFile();
+
+      if (!query || query.trim() === '') {
+        return settings.connections;
+      }
+
+      const lowerQuery = query.toLowerCase();
+      return settings.connections.filter(
+        (conn) =>
+          conn.name.toLowerCase().includes(lowerQuery) ||
+          conn.driver.toLowerCase().includes(lowerQuery),
+      );
+    } catch (error) {
+      console.error('Error searching connections:', error);
+      return [];
+    }
   }
 }
 

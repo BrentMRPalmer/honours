@@ -63,7 +63,7 @@ function ConnectionViewSidebar() {
               </TabsTrigger>
             </TooltipTrigger>
             <TooltipContent side='bottom' sideOffset={2}>
-              Tables
+              <span className='font-semibold'>Tables</span>
             </TooltipContent>
           </Tooltip>
 
@@ -101,7 +101,7 @@ function ConnectionViewSidebar() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side='bottom' sideOffset={2}>
-              Editor
+              <span className='font-semibold'>Editor</span>
             </TooltipContent>
           </Tooltip>
 
@@ -117,7 +117,7 @@ function ConnectionViewSidebar() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side='bottom' sideOffset={2}>
-              AI Chat
+              <span className='font-semibold'>AI Chat</span>
             </TooltipContent>
           </Tooltip>
         </TabsList>
@@ -125,12 +125,16 @@ function ConnectionViewSidebar() {
 
       <TabsContent
         value='tables'
-        className='flex h-full flex-col gap-2 overflow-y-auto py-2'
+        className='flex h-full flex-col gap-2 overflow-y-auto px-3 py-2'
       >
+        <h3 className='text-muted-foreground mb-2 px-1 text-sm font-medium tracking-wider uppercase'>
+          Tables
+        </h3>
+
         {tables.map((table) => (
           <div
             key={table}
-            className='hover:bg-primary/10 flex cursor-pointer items-center gap-1 rounded px-2 py-1'
+            className='hover:bg-primary/10 border-border flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1.5'
             onClick={() =>
               tabManager.createTab(
                 table,
@@ -142,7 +146,7 @@ function ConnectionViewSidebar() {
             }
           >
             <SheetIcon size={16} className='min-w-fit' />
-            <p className='truncate'>{table}</p>
+            <p className='truncate text-sm'>{table}</p>
           </div>
         ))}
       </TabsContent>

@@ -13,14 +13,16 @@ interface ConnectionViewProps {
 function ConnectionView({ connection }: ConnectionViewProps) {
   return (
     <ConnectionViewProvider connection={connection}>
-      <Allotment>
-        <Allotment.Pane minSize={100}>
-          <ConnectionViewSidebar />
-        </Allotment.Pane>
-        <Allotment.Pane minSize={100}>
-          <ConnectionViewMain />
-        </Allotment.Pane>
-      </Allotment>
+      <div className='border-border h-full overflow-hidden rounded-md border'>
+        <Allotment defaultSizes={[200, 800]}>
+          <Allotment.Pane minSize={100}>
+            <ConnectionViewSidebar />
+          </Allotment.Pane>
+          <Allotment.Pane minSize={100}>
+            <ConnectionViewMain />
+          </Allotment.Pane>
+        </Allotment>
+      </div>
     </ConnectionViewProvider>
   );
 }
