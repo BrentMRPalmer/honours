@@ -18,8 +18,18 @@ class MongoConnection extends AbstractConnection<string> {
   }
 
   async query<T extends object>(query: string): Promise<QueryResult<T>> {
-    const escapedQuery = query.replace(/'/g, "'\\''");
-    const command = `mongosh "${this.db}" --quiet --eval '${escapedQuery}'`;
+    const isWindows = process.platform === 'win32';
+    
+    let command;
+    if (isWindows) {
+      // For Windows: Use double quotes and escape double quotes in the query
+      const escapedQuery = query.replace(/"/g, '\\"');
+      command = `mongosh "${this.db}" --quiet --eval "${escapedQuery}"`;
+    } else {
+      // For Unix/Mac: Use single quotes and escape single quotes in the query
+      const escapedQuery = query.replace(/'/g, "'\\''");
+      command = `mongosh "${this.db}" --quiet --eval '${escapedQuery}'`;
+    }
     
     const output = await this.execCommandRaw(command);
     let result: { rows: T[]; columns?: Array<keyof T> };
