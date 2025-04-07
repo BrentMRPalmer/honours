@@ -147,7 +147,7 @@ class ConnectionProxy extends AbstractController {
     }
   }
 
-  async agent(_: IpcEvent, id: string, query: string) {
+  async agent(_: IpcEvent, id: string, query: string, selectedModel: string) {
     const connection = this.openConnections.get(id);
 
     if (!connection) {
@@ -155,7 +155,7 @@ class ConnectionProxy extends AbstractController {
     }
 
     try {
-      const a = createSqlAgent(connection);
+      const a = createSqlAgent(connection, selectedModel);
       return (await a.chat({ message: query })).message.content;
     } catch (error) {
       console.error(`Error using agent on connection ${id}:`, error);
@@ -168,8 +168,6 @@ class ConnectionProxy extends AbstractController {
     { driver, config }: Omit<Connection, 'id' | 'name'>,
   ) {
     try {
-      // For now, we'll just return success for all drivers
-      // In a real implementation, we would attempt to connect using the specified driver and config
       switch (driver) {
         case 'sqlite': {
           // Check if the file exists and can be opened
@@ -219,7 +217,6 @@ class ConnectionProxy extends AbstractController {
           throw new Error(`Unsupported database driver: ${driver}`);
         }
       }
-
       return { success: true, message: 'Connection successful' };
     } catch (error) {
       console.error(`Error testing ${driver} connection:`, error);

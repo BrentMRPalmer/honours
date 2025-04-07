@@ -107,7 +107,7 @@ function ConnectionViewMain() {
         <TabsContent
           key={id}
           value={id}
-          className='overflow-hidden data-[state=inactive]:hidden'
+          className='flex-grow overflow-hidden data-[state=inactive]:hidden'
           forceMount
         >
           {component}
