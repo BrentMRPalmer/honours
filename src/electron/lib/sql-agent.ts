@@ -10,17 +10,19 @@ Settings.callbackManager.on('llm-tool-result', (event) => {
   console.log(event.detail);
 });
 
-function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: string) {
-
+function createSqlAgent(
+  connection: AbstractConnection<unknown>,
+  selectedModel: string,
+) {
   // Instantiate the LLM for the agent
   const llm = new OpenAI({
     apiKey: process.env['OPENROUTER_API_KEY'] as string,
-    baseURL: "https://openrouter.ai/api/v1",
-    model: selectedModel
+    baseURL: 'https://openrouter.ai/api/v1',
+    model: selectedModel,
   });
 
   async function runQuery({ query }: { query: string }) {
-    console.log("Running runQuery tool")
+    console.log('Running runQuery tool');
     return await connection
       .query(query)
       .then((result) =>
@@ -29,7 +31,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   }
 
   async function getTables() {
-    console.log("Running get tables tool")
+    console.log('Running get tables tool');
     return await connection
       .getTables()
       .then((result) =>
@@ -38,7 +40,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   }
 
   async function getTableSchema({ table }: { table: string }) {
-    console.log("Running get table schema tool")
+    console.log('Running get table schema tool');
     return await connection
       .getTableSchema(table)
       .then((result) =>
@@ -47,7 +49,7 @@ function createSqlAgent(connection: AbstractConnection<unknown>, selectedModel: 
   }
 
   async function getTableFirst5Rows({ table }: { table: string }) {
-    console.log("Running get table five rows tool")
+    console.log('Running get table five rows tool');
     return await connection
       .query(`SELECT * FROM ${table} LIMIT 5;`)
       .then((result) =>

@@ -76,37 +76,45 @@ const EditorToolbar = ({
     if (!editorModel) return;
 
     // Extract the current line the cursor is on
-    const currentPosition = editorRef.current.getPosition()
+    const currentPosition = editorRef.current.getPosition();
     if (!currentPosition) return;
 
     // Find the row and column of the previous delimiter
     let startRow = currentPosition.lineNumber;
     let prevDelimIndex = -1;
 
-    while (prevDelimIndex === -1 && startRow >= 2){
+    while (prevDelimIndex === -1 && startRow >= 2) {
       startRow--;
       let currentLine = editorModel.getLineContent(startRow);
-      prevDelimIndex = currentLine.lastIndexOf(";");
+      prevDelimIndex = currentLine.lastIndexOf(';');
     }
-    const startCol = prevDelimIndex + 2
-    console.log("start row: " + startRow + " start column: " + startCol);
+    const startCol = prevDelimIndex + 2;
+    console.log('start row: ' + startRow + ' start column: ' + startCol);
 
     // Find the row and column of the next delimiter
     let endRow = currentPosition.lineNumber - 1;
     let endDelimIndex = -1;
 
-    while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1){
+    while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1) {
       endRow++;
       let currentLine = editorModel.getLineContent(endRow);
-      endDelimIndex = currentLine.lastIndexOf(";");
+      endDelimIndex = currentLine.lastIndexOf(';');
     }
-    const endCol = (endDelimIndex === -1) ? editorModel.getLineLength(editorModel.getLineCount()) + 1 : endDelimIndex + 1
-    console.log("end row: " + endRow + " end column: " + endCol);
+    const endCol =
+      endDelimIndex === -1
+        ? editorModel.getLineLength(editorModel.getLineCount()) + 1
+        : endDelimIndex + 1;
+    console.log('end row: ' + endRow + ' end column: ' + endCol);
 
     // Extact the text for the current line's query
-    const sourceCode = editorModel.getValueInRange({ startLineNumber: startRow, startColumn: startCol, endLineNumber: endRow, endColumn: endCol});
+    const sourceCode = editorModel.getValueInRange({
+      startLineNumber: startRow,
+      startColumn: startCol,
+      endLineNumber: endRow,
+      endColumn: endCol,
+    });
     if (!sourceCode) return;
-    console.log(sourceCode)
+    console.log(sourceCode);
 
     // Execute the query, returning a promise
     setQueryResult(connection.query(sourceCode));
