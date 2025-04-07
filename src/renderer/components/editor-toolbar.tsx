@@ -147,18 +147,18 @@ const EditorToolbar = ({
           <Button
             variant='default'
             size='sm'
-            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-8 min-w-[75px] border px-3.5 py-0 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground h-7 border px-2.5 py-0 rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
             onClick={runQuery}
             disabled={!hasContent}
           >
-            <span className='flex items-center'>
+            <span className='flex items-center gap-1'>
               <Play size={14} strokeWidth={2} />
-              <span className='ml-1.5 font-semibold'>Run Query</span>
+              <span className='font-medium text-xs'>Execute Query</span>
             </span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-semibold'>Execute Query (Ctrl+Enter)</span>
+          <span className='font-medium'>Execute Query (Ctrl+Enter)</span>
         </TooltipContent>
       </Tooltip>
 
@@ -167,18 +167,15 @@ const EditorToolbar = ({
           <Button
             variant='default'
             size='sm'
-            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground ml-2 h-8 border px-3 py-0 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground ml-2 h-7 w-7 border p-0 rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
             onClick={runLine}
             disabled={!hasContent}
           >
-            <span className='flex items-center'>
-              <PlaySquare size={14} strokeWidth={2} />
-              <span className='ml-1.5 text-xs font-semibold'>Run Line</span>
-            </span>
+            <PlaySquare size={16} strokeWidth={2} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-semibold'>Run Current Line</span>
+          <span className='font-medium'>Run Current Line</span>
         </TooltipContent>
       </Tooltip>
 
@@ -187,18 +184,15 @@ const EditorToolbar = ({
           <Button
             variant='default'
             size='sm'
-            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground ml-2 h-8 border px-3 py-0 disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
+            className='bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground ml-2 h-7 w-7 border p-0 rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-inner'
             onClick={runSelection}
             disabled={!hasContent}
           >
-            <span className='flex items-center'>
-              <PlayCircle size={14} strokeWidth={2} />
-              <span className='ml-1.5 text-xs font-semibold'>Run Selected</span>
-            </span>
+            <PlayCircle size={16} strokeWidth={2} />
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-semibold'>Run Highlighted Query</span>
+          <span className='font-medium'>Run Highlighted Query</span>
         </TooltipContent>
       </Tooltip>
     </div>
