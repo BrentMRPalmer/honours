@@ -41,27 +41,6 @@ class SettingsController extends AbstractController {
   async getConnections(): Promise<Connection[]> {
     try {
       const settings = await this.#readSettingsFile();
-      if (settings.connections.length === 0) {
-        // Return mock connections if no connections are saved
-        return [
-          {
-            id: '1',
-            driver: 'sqlite',
-            name: 'Sample SQLite DB',
-            config: {
-              filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
-            },
-          },
-          {
-            id: '2',
-            driver: 'sqlite',
-            name: 'Another SQLite DB',
-            config: {
-              filename: 'C:\\Season11\\Honours\\Data\\sakila_master.db',
-            },
-          },
-        ] as Connection[];
-      }
       return settings.connections;
     } catch (error) {
       console.error('Error getting connections:', error);
