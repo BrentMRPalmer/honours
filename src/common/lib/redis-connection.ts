@@ -1,4 +1,7 @@
 import { exec } from 'child_process';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 import { AbstractConnection } from '@/common/lib/abstract-connection';
 import type { ConnectionDriver, QueryResult } from '@/common/types';
@@ -33,6 +36,70 @@ const buildRedisCommand = (
   }
 };
 
+// Helper function to safely execute Redis EVAL commands on any platform
+const execRedisEval = (
+  connectionUri: string, 
+  luaScript: string, 
+  ...args: (string | number)[]
+): Promise<string> => {
+  // We'll write the script to a file as is - no need to flatten it
+  // This preserves proper script formatting and line numbers for error messages
+  
+  return new Promise((resolve, reject) => {
+    try {
+      // Write to file approach - more reliable across platforms
+      // Use path.join for proper cross-platform path handling
+      const tempFile = path.join(os.tmpdir(), `redis-lua-${Date.now()}.lua`);
+      fs.writeFileSync(tempFile, luaScript, 'utf8');
+      
+      // Build command - explicitly load script from file
+      // Construct the command differently based on platform
+      let command;
+      if (process.platform === 'win32') {
+        // On Windows, we pass arguments differently
+        command = `redis-cli -u "${connectionUri}" --raw --eval ${tempFile} 0`;
+        // Add each argument individually to avoid space parsing issues
+        if (args.length > 0) {
+          command += ' ' + args.map(arg => `"${arg}"`).join(' ');
+        }
+      } else {
+        // On Mac/Unix, this works fine
+        command = `redis-cli -u "${connectionUri}" --raw --eval ${tempFile} 0`;
+        if (args.length > 0) {
+          command += ' ' + args.join(' ');
+        }
+      }
+      
+      console.log('Executing Redis command:', command);
+      
+      // Use exec which is more consistent across platforms
+      exec(command, (error, stdout, stderr) => {
+        // Clean up temp file regardless of outcome
+        try {
+          fs.unlinkSync(tempFile);
+        } catch (e) {
+          console.warn('Failed to delete temporary Lua script file:', e);
+        }
+        
+        if (error) {
+          // Real error occurred
+          return reject(stderr || error.message);
+        }
+        
+        // Handle redis-cli password warnings (not actual errors)
+        if (stderr && stderr.trim() && !stderr.includes("Warning: Using a password")) {
+          // Only reject if it's a real error, not the password warning
+          return reject(new Error(stderr.trim()));
+        }
+        
+        resolve(stdout.trim());
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 class RedisConnection extends AbstractConnection<string> {
   get connectionDriver(): ConnectionDriver {
     return 'redis';
@@ -63,23 +130,17 @@ class RedisConnection extends AbstractConnection<string> {
       if (parts.length >= 2) {
         const key = parts[1];
         // Build a Lua script that retrieves the value and returns a JSON object.
-        const luaScript = `local v = redis.call("GET", "${key}"); return cjson.encode({ key = "${key}", value = v })`;
+        const luaScript = `
+local v = redis.call("GET", "${key}")
+return cjson.encode({ key = "${key}", value = v })
+`;
         
-        // Create command with our helper function
-        let command = "";
-        const isWindows = process.platform === 'win32';
+        let output;
         
-        if (isWindows) {
-          // On Windows, we need to handle the arguments differently
-          const escapedScript = luaScript.replace(/"/g, '\\"');
-          command = `redis-cli -u "${this.db}" --raw EVAL "${escapedScript}" 0`;
-        } else {
-          // On Unix/Mac
-          command = `redis-cli -u "${this.db}" --raw EVAL '${luaScript}' 0`;
-        }
-        
-        const output = await this.execCommandRaw(command);
         try {
+          // Use our cross-platform Redis EVAL helper
+          output = await execRedisEval(this.db, luaScript);
+          
           // Check for Redis error messages
           if (output.startsWith('ERR') || output.startsWith('WRONGTYPE')) {
             console.error("Redis error:", output);
@@ -88,7 +149,28 @@ class RedisConnection extends AbstractConnection<string> {
               columns: ['key', 'value'],
             } as QueryResult<T>;
           }
-          
+        } catch (error) {
+          console.error("Redis EVAL error:", error);
+          // If this is not the password warning, treat as a real error
+          if (!error.message?.includes("Warning: Using a password")) {
+            return { 
+              rows: [{ key: 'error', value: `Redis error: ${error.message}` } as unknown as T],
+              columns: ['key', 'value'],
+            } as QueryResult<T>;
+          }
+          // Otherwise continue with empty output
+          output = "";
+        }
+        
+        // Handle empty output case
+        if (!output || output.trim() === "") {
+          return { 
+            rows: [], 
+            columns: ['key', 'value'] 
+          } as QueryResult<T>;
+        }
+        
+        try {
           // Clean the output string to handle potential Windows line ending issues
           const cleanedOutput = output.trim().replace(/\r/g, '');
           const parsed = JSON.parse(cleanedOutput);
@@ -97,8 +179,8 @@ class RedisConnection extends AbstractConnection<string> {
             rows: [parsed],
             columns: ['key', 'value'],
           } as QueryResult<T>;
-        } catch (error) {
-          console.error("Error parsing Redis GET output:", error, "Raw output:", output);
+        } catch (jsonError) {
+          console.error("Error parsing Redis GET JSON response:", jsonError);
           return { 
             rows: [{ key: 'error', value: `Failed to parse response: ${output}` } as unknown as T],
             columns: ['key', 'value'] 
@@ -192,33 +274,27 @@ class RedisConnection extends AbstractConnection<string> {
     const offset = (page - 1) * pageSize;
     
     // Lua script to get all keys, sort them, and return paginated key/value pairs.
-    const luaScript = `local keys = redis.call("KEYS", "*")
+    // Make sure to handle nil values for offset and limit
+    const luaScript = `
+local keys = redis.call("KEYS", "*")
 table.sort(keys)
-local offset = tonumber(ARGV[1])
-local limit = tonumber(ARGV[2])
+local offset = tonumber(ARGV[1]) or 0
+local limit = tonumber(ARGV[2]) or 10
 local result = {}
 for i = offset+1, math.min(offset+limit, #keys) do
   local k = keys[i]
   local v = redis.call("GET", k)
   result[#result+1] = { key = k, value = v }
 end
-return cjson.encode(result)`;
+return cjson.encode(result)
+`;
 
-    // Create command with our helper function
-    let command = "";
-    const isWindows = process.platform === 'win32';
+    let output;
     
-    if (isWindows) {
-      // On Windows, we need to handle the arguments differently
-      const escapedScript = luaScript.replace(/"/g, '\\"');
-      command = `redis-cli -u "${this.db}" --raw EVAL "${escapedScript}" 0 ${offset} ${pageSize}`;
-    } else {
-      // On Unix/Mac
-      command = `redis-cli -u "${this.db}" --raw EVAL '${luaScript}' 0 ${offset} ${pageSize}`;
-    }
-    
-    const output = await this.execCommandRaw(command);
     try {
+      // Use our cross-platform Redis EVAL helper
+      output = await execRedisEval(this.db, luaScript, offset, pageSize);
+      
       // Check for Redis error messages
       if (output.startsWith('ERR') || output.startsWith('WRONGTYPE')) {
         console.error("Redis error:", output);
@@ -227,18 +303,39 @@ return cjson.encode(result)`;
           columns: ['key', 'value']
         };
       }
-      
-      // Clean the output string to handle potential Windows line ending issues
-      const cleanedOutput = output.trim().replace(/\r/g, '');
-      const rows = JSON.parse(cleanedOutput);
-      return { rows, columns: ['key', 'value'] };
     } catch (error) {
-      console.error("Error parsing Redis Lua script output:", error, "Raw output:", output);
-      return { 
-        rows: [{ key: 'error', value: `Failed to parse response: ${output}` }],
-        columns: ['key', 'value'] 
-      };
+      console.error("Redis EVAL error:", error);
+      // If this is not the password warning, treat as a real error
+      if (!error.message?.includes("Warning: Using a password")) {
+        return { 
+          rows: [{ key: 'error', value: `Redis error: ${error.message}` }],
+          columns: ['key', 'value']
+        };
+      }
+      // Otherwise continue with empty output
+      output = "";
     }
+      
+      // Clean the output string to handle potential Windows line ending issues  
+      if (!output || output.trim() === "") {
+        // Handle empty output case
+        return { 
+          rows: [], 
+          columns: ['key', 'value'] 
+        };
+      }
+      
+      try {
+        const cleanedOutput = output.trim().replace(/\r/g, '');
+        const rows = JSON.parse(cleanedOutput);
+        return { rows, columns: ['key', 'value'] };
+      } catch (jsonError) {
+        console.error("Error parsing Redis JSON response:", jsonError);
+        return { 
+          rows: [{ key: 'error', value: `Failed to parse response: ${output}` }], 
+          columns: ['key', 'value'] 
+        };
+      }
   }
 
   async getTableCount(tableName: string): Promise<number> {
