@@ -3,6 +3,36 @@ import { exec } from 'child_process';
 import { AbstractConnection } from '@/common/lib/abstract-connection';
 import type { ConnectionDriver, QueryResult } from '@/common/types';
 
+// Helper function to build platform-specific Redis commands
+const buildRedisCommand = (
+  connectionUri: string,
+  command: string,
+  isLuaScript: boolean = false
+): string => {
+  const isWindows = process.platform === 'win32';
+  
+  if (isLuaScript) {
+    if (isWindows) {
+      // Windows: Use double quotes and escape internal double quotes
+      const escapedScript = command.replace(/"/g, '\\"');
+      return `redis-cli -u "${connectionUri}" --raw EVAL "${escapedScript}"`;
+    } else {
+      // Unix/Mac: Use single quotes
+      return `redis-cli -u "${connectionUri}" --raw EVAL '${command}'`;
+    }
+  } else {
+    // Handle regular Redis commands
+    if (isWindows) {
+      // Windows: Escape any double quotes in the query
+      const escapedCommand = command.replace(/"/g, '\\"');
+      return `redis-cli -u "${connectionUri}" --raw ${escapedCommand}`;
+    } else {
+      // Unix/Mac: No special handling needed
+      return `redis-cli -u "${connectionUri}" --raw ${command}`;
+    }
+  }
+};
+
 class RedisConnection extends AbstractConnection<string> {
   get connectionDriver(): ConnectionDriver {
     return 'redis';
@@ -10,7 +40,8 @@ class RedisConnection extends AbstractConnection<string> {
 
   async connect(): Promise<void> {
     console.log(`Redis connection string: ${this.db}`);
-    const command = `redis-cli -u "${this.db}" --raw PING`;
+    
+    const command = buildRedisCommand(this.db, 'PING');
     console.log(`Testing Redis connection: ${command}`);
 
     const result = await this.execCommandRaw(command);
@@ -33,7 +64,10 @@ class RedisConnection extends AbstractConnection<string> {
         const key = parts[1];
         // Build a Lua script that retrieves the value and returns a JSON object.
         const luaScript = `local v = redis.call("GET", "${key}"); return cjson.encode({ key = "${key}", value = v })`;
-        const command = `redis-cli -u "${this.db}" --raw EVAL '${luaScript}' 0`;
+        
+        // Create command with our helper function
+        const command = buildRedisCommand(this.db, luaScript, true) + ' 0'; // Add the 0 arg for EVAL
+        
         const output = await this.execCommandRaw(command);
         try {
           const parsed = JSON.parse(output);
@@ -48,7 +82,8 @@ class RedisConnection extends AbstractConnection<string> {
     }
 
     if (trimmed.toUpperCase().startsWith('KEYS ')) {
-      const command = `redis-cli -u "${this.db}" --raw ${query}`;
+      const command = buildRedisCommand(this.db, query);
+      
       const output = await this.execCommandRaw(command);
       // Split the output by newline and filter out empty lines.
       const keys = output.split('\n').filter((key) => key.trim() !== '');
@@ -73,7 +108,8 @@ class RedisConnection extends AbstractConnection<string> {
     }
 
     // For all other commands, simply execute them raw.
-    const command = `redis-cli -u "${this.db}" --raw ${query}`;
+    const command = buildRedisCommand(this.db, query);
+    
     const output = await this.execCommandRaw(command);
     let result: { rows: T[]; columns?: Array<keyof T> };
     try {
@@ -123,6 +159,7 @@ class RedisConnection extends AbstractConnection<string> {
     pageSize: number = 400,
   ): Promise<QueryResult<any>> {
     const offset = (page - 1) * pageSize;
+    
     // Lua script to get all keys, sort them, and return paginated key/value pairs.
     const luaScript = `local keys = redis.call("KEYS", "*")
 table.sort(keys)
@@ -135,7 +172,10 @@ for i = offset+1, math.min(offset+limit, #keys) do
   result[#result+1] = { key = k, value = v }
 end
 return cjson.encode(result)`;
-    const command = `redis-cli -u "${this.db}" --raw EVAL '${luaScript}' 0 ${offset} ${pageSize}`;
+
+    // Create command with our helper function and add arguments
+    const command = buildRedisCommand(this.db, luaScript, true) + ` 0 ${offset} ${pageSize}`;
+    
     const output = await this.execCommandRaw(command);
     try {
       const rows = JSON.parse(output);
@@ -146,7 +186,8 @@ return cjson.encode(result)`;
   }
 
   async getTableCount(tableName: string): Promise<number> {
-    const command = `redis-cli -u "${this.db}" --raw DBSIZE`;
+    // Use the helper function to create a platform-specific command
+    const command = buildRedisCommand(this.db, 'DBSIZE');
     const output = await this.execCommandRaw(command);
     try {
       return parseInt(output, 10);
