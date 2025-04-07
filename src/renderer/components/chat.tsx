@@ -15,8 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useConnectionViewContext } from './connection-view/connection-view-provider';
 
 function Chat() {
+  const { connection } = useConnectionViewContext();
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -28,20 +30,35 @@ function Chat() {
     setInput,
     messages,
     async append(message) {
-      setIsLoading(true);
-      setMessages((messages) => messages.concat([message]));
-      const response = await window.ConnectionProxy.agent(
-        '1',
-        message.content,
-        selectedModel,
-      );
-      setMessages((messages) =>
-        messages.concat([
-          { content: response, role: 'assistant', annotations: '' },
-        ]),
-      );
-      setIsLoading(false);
-      return Promise.resolve('');
+      try {
+        setIsLoading(true);
+        setMessages((messages) => messages.concat([message]));
+        const response = await window.ConnectionProxy.agent(
+          connection.id,
+          message.content,
+          selectedModel,
+        );
+        setMessages((messages) =>
+          messages.concat([
+            { content: response, role: 'assistant', annotations: '' },
+          ]),
+        );
+        return Promise.resolve('');
+      } catch (error) {
+        console.error('Error in chat agent:', error);
+        setMessages((messages) =>
+          messages.concat([
+            { 
+              content: `Error: ${error.message || 'Failed to get response from agent'}`, 
+              role: 'assistant', 
+              annotations: '' 
+            },
+          ]),
+        );
+        return Promise.resolve('');
+      } finally {
+        setIsLoading(false);
+      }
     },
   };
 
