@@ -165,29 +165,29 @@ function Chat() {
           <DialogTrigger asChild>
             <Button variant="outline">System Prompt</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[700px]">
             <DialogHeader>
-              <DialogTitle>Edit System Prompt</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Edit System Prompt</DialogTitle>
               <DialogDescription>
                 Make changes to your system prompt here. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="basePrompt" className="text-right">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="basePrompt" className="text-right text-lg font-semibold">
                   Base Prompt
                 </Label>
-                <Textarea id="basePrompt" value={basePrompt} disabled className="col-span-3 max-h-40 overflow-y-auto" />
+                <Textarea id="basePrompt" value={basePrompt} disabled className="col-span-3 max-h-50 overflow-y-auto" />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="custom-prompt" className="text-right">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="custom-prompt" className="text-right text-lg font-semibold">
                   Custom Prompt
                 </Label>
                 <Textarea 
                   id="custom-prompt"
                   value={tempCustomPrompt}
                   onChange={(e) => setTempCustomPrompt(e.target.value)}
-                  className="col-span-3 max-h-40 overflow-y-auto"
+                  className="col-span-3 max-h-50 overflow-y-auto"
                 />
               </div>
             </div>
