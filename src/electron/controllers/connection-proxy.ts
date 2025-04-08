@@ -147,7 +147,7 @@ class ConnectionProxy extends AbstractController {
     }
   }
 
-  async agent(_: IpcEvent, id: string, query: string, selectedModel: string) {
+  async agent(_: IpcEvent, id: string, query: string, selectedModel: string, customSystemPrompt: string) {
     const connection = this.openConnections.get(id);
 
     if (!connection) {
@@ -155,7 +155,7 @@ class ConnectionProxy extends AbstractController {
     }
 
     try {
-      const a = createSqlAgent(connection, selectedModel);
+      const a = createSqlAgent(connection, selectedModel, customSystemPrompt);
       return (await a.chat({ message: query })).message.content;
     } catch (error) {
       console.error(`Error using agent on connection ${id}:`, error);

@@ -23,6 +23,56 @@ function Chat() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedModel, setSelectedModel] = useState('openrouter/quasar-alpha');
+  const [customSystemPrompt, setCustomSystemPrompt] = useState(
+    `Use the following data for how grading works to determine averages. Letter grades with empty numeric 
+    column does not contribute to GPA:
+
+    | Letter Grade | Numeric Value |
+    | ------------ | ------------- |
+    | A+           | 10            |
+    | A            | 9             |
+    | A-           | 8             |
+    | B+           | 7             |
+    | B            | 6             |
+    | C+           | 5             |
+    | C            | 4             |
+    | D+           | 3             |
+    | D            | 2             |
+    | E            | 1             |
+    | F            | 0             |
+    | ABS          | 0             |
+    | EIN          | 0             |
+    | CR           |               |
+    | NC           |               |
+    | P            |               |
+    | S            |               |
+    | NS           |               |
+
+    The following python code is used to generate the term id:
+
+    \`\`\`python
+    def term_id(year, season):
+      season_id = {"winter": 0, "summer": 1, "fall": 2}
+      return (year * 10) + season_id
+
+    term_id(2022, "winter")   # 20220
+    term_id(2017, "fall")     # 20172
+    term_id(2019, "summer")   # 20191
+    \`\`\`
+
+    The following python code is used to get what year the course is for:
+
+    \`\`\`python
+    def course_year(course):
+      return course['code'].replace(course['subject_code'], '')[0]
+
+    course_year({"code": "CSI2101", "subject_code": "CSI"})   # 2
+    course_year({"code": "PSY1101", "subject_code": "PSY"})   # 1
+    course_year({"code": "MAT4130", "subject_code": "MAT"})   # 4
+    course_year({"code": "ECO3020", "subject_code": "ECO"})   # 3
+    \`\`\`
+  `.trim()
+  );
 
   const handler: ChatHandler = {
     isLoading,
@@ -33,10 +83,12 @@ function Chat() {
       try {
         setIsLoading(true);
         setMessages((messages) => messages.concat([message]));
+        console.log(customSystemPrompt)
         const response = await window.ConnectionProxy.agent(
           connection.id,
           message.content,
           selectedModel,
+          customSystemPrompt
         );
         setMessages((messages) =>
           messages.concat([
