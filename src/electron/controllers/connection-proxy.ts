@@ -7,7 +7,7 @@ import { RedisConnection } from '@/common/lib/redis-connection';
 import { SqliteConnection } from '@/common/lib/sqlite-connection';
 import type { Connection } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
-import { createSqlAgent } from '@/lib/sql-agent';
+import { createSqlAgent } from '@/lib/ai-agent';
 
 class ConnectionProxy extends AbstractController {
   openConnections = new Map<string, AbstractConnection<unknown>>();
