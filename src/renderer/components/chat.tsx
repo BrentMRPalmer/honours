@@ -6,6 +6,20 @@ import {
   Message,
 } from '@llamaindex/chat-ui';
 
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+
 import { useState } from 'react';
 
 import {
@@ -74,6 +88,7 @@ function Chat() {
     \`\`\`
   `.trim()
   );
+  const [tempCustomPrompt, setTempCustomPrompt] = useState(customSystemPrompt);
 
   const basePrompt = getBasePrompt(connection)
 
@@ -120,7 +135,7 @@ function Chat() {
 
   return (
     <div className='flex h-full flex-col'>
-      <div className='border-b p-4'>
+      <div className='border-b p-4 flex items-center justify-between'>
         <Select
           value={selectedModel}
           onValueChange={(val) => setSelectedModel(val)}
@@ -146,6 +161,48 @@ function Chat() {
             </SelectItem>
           </SelectContent>
         </Select>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">System Prompt</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit System Prompt</DialogTitle>
+              <DialogDescription>
+                Make changes to your system prompt here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="basePrompt" className="text-right">
+                  Base Prompt
+                </Label>
+                <Textarea id="basePrompt" value={basePrompt} disabled className="col-span-3 max-h-40 overflow-y-auto" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="custom-prompt" className="text-right">
+                  Custom Prompt
+                </Label>
+                <Textarea 
+                  id="custom-prompt"
+                  value={tempCustomPrompt}
+                  onChange={(e) => setTempCustomPrompt(e.target.value)}
+                  className="col-span-3 max-h-40 overflow-y-auto"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button
+                  type="submit"
+                  onClick={() => setCustomSystemPrompt(tempCustomPrompt)}
+                >
+                  Save changes
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <ChatSection
         handler={handler}
