@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
+import { getBasePrompt } from '@/common/lib/prompt-helpers';
 
 function Chat() {
   const { connection } = useConnectionViewContext();
@@ -74,6 +75,8 @@ function Chat() {
   `.trim()
   );
 
+  const basePrompt = getBasePrompt(connection)
+
   const handler: ChatHandler = {
     isLoading,
     input,
@@ -88,6 +91,7 @@ function Chat() {
           connection.id,
           message.content,
           selectedModel,
+          basePrompt,
           customSystemPrompt
         );
         setMessages((messages) =>
