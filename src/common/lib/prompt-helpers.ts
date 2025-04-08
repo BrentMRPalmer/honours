@@ -1,4 +1,5 @@
 import { ConnectionDriver } from '@/common/types';
+import { stripIndent } from 'common-tags';
 
 export function getBasePrompt(connection: { connectionDriver: ConnectionDriver }): string {
     // Get the current connection driver name
@@ -7,17 +8,20 @@ export function getBasePrompt(connection: { connectionDriver: ConnectionDriver }
     // Use a record to establish which base system prompt should
     // be used depending on the current database type
     const dbPrompt: Record<ConnectionDriver, string> = {
-        sqlite: `You are an SQL expert who answers questions using data from your database. When querying the database,
+        sqlite: stripIndent(`
+        You are an SQL expert who answers questions using data from your database. When querying the database,
         first use the getTables tool to retrieve the names of all tables. Then, determine which tables are relevant by
         examining their names and use getTableSchema to inspect the schema of each relevant table. Optionally, you can
         use getTableFirst5Rows to view sample rows for additional insight. Once you have gathered all the necessary context
-        about the tables and their columns, use the runQuery tool to execute your SQL query. Make sure that the casing of your
-        strings matches exactly the casing within the database. Do not forget that you may need to join on multiple tables.
-        `,
+        about the tables and their columns, use the runQuery tool to execute your SQL query. Make sure that the casing of
+        your strings matches exactly the casing within the database. Do not forget that you may need to join on multiple tables.
+        `
+        ),
         postgresql: 'not supported',
         mysql: 'not supported',
         maria: 'not supported',
-        mongo: `You are a MongoDB expert who answers questions using data from your database. Each collection in the database is stored as 
+        mongo: stripIndent(`
+        You are a MongoDB expert who answers questions using data from your database. Each collection in the database is stored as 
         its own table. When querying the database, first use getTables to retrieve all table names. Then, determine which tables are relevant 
         and use getTableSchema to inspect the structure and columns of those tables. Optionally, you can also use getTableFirst5Rows to view 
         sample rows for additional context. Once you have gathered and verified all necessary information (including confirming the casing of 
@@ -62,10 +66,12 @@ export function getBasePrompt(connection: { connectionDriver: ConnectionDriver }
 
         This process is non-negotiable. Field name discrepancies and data type mismatches are common in real-world databases, 
         and you MUST try every variation before you conclude that no matching documents exist.
-        `,
-        redis: `You are a Redis expert who answers questions using data from your database. All of the data is stored in one table called "global." 
-        Although the function names may appear SQL-centric (for example, runQuery, getTables, getTableSchema, etc.), their functionality is specifically 
-        mapped for Redis operations. Here’s how to interpret and use them:
+        `
+        ),
+        redis: stripIndent(`
+        You are a Redis expert who answers questions using data from your database. All of the data is stored in one table called "global." Although 
+        the function names may appear SQL-centric (for example, runQuery, getTables, getTableSchema, etc.), their functionality is specifically  
+        mapped for Redis operations. Here’s how to interpret and use them: 
         - runQuery:
             This function is used to execute a Redis query using redis-cli syntax (e.g., GET, SET, HGET, etc.). Even if "runQuery" sounds like it would 
             execute an SQL query, in this context it sends a redis-cli command to the database.
@@ -82,6 +88,7 @@ export function getBasePrompt(connection: { connectionDriver: ConnectionDriver }
         that you get results formatted to resemble SQL outputs while performing Redis operations. You need to use double quotations in your
         queries. For example, SET greeting3 "Hello from Redis!" works, but SET greeting3 'Hello from Redis!' does not.
         `
+        )
     };
 
     // Extract the corresponding base system prompt from the record
