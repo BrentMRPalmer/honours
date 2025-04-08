@@ -7,7 +7,7 @@ import { RedisConnection } from '@/common/lib/redis-connection';
 import { SqliteConnection } from '@/common/lib/sqlite-connection';
 import type { Connection } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
-import { createSqlAgent } from '@/lib/ai-agent';
+import { createAiAgent } from '@/lib/ai-agent';
 
 class ConnectionProxy extends AbstractController {
   openConnections = new Map<string, AbstractConnection<unknown>>();
@@ -155,7 +155,7 @@ class ConnectionProxy extends AbstractController {
     }
 
     try {
-      const a = createSqlAgent(connection, selectedModel, baseSystemPrompt, customSystemPrompt);
+      const a = createAiAgent(connection, selectedModel, baseSystemPrompt, customSystemPrompt);
       return (await a.chat({ message: query })).message.content;
     } catch (error) {
       console.error(`Error using agent on connection ${id}:`, error);

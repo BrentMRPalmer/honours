@@ -10,7 +10,7 @@ Settings.callbackManager.on('llm-tool-result', (event) => {
   console.log(event.detail);
 });
 
-function createSqlAgent(
+function createAiAgent(
   connection: AbstractConnection<unknown>,
   selectedModel: string,
   baseSystemPrompt: string,
@@ -132,4 +132,4 @@ function createSqlAgent(
   return new OpenAIAgent({ llm, systemPrompt, tools });
 }
 
-export { createSqlAgent };
+export { createAiAgent };
