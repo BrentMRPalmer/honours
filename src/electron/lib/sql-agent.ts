@@ -60,7 +60,7 @@ function createSqlAgent(
   async function getTableFirst5Rows({ table }: { table: string }) {
     console.log('Running get table five rows tool');
     return await connection
-      .query(`SELECT * FROM ${table} LIMIT 5;`)
+      .getPaginatedTableData(table, 1, 5)
       .then((result) =>
         markdownTable([result.columns, ...result.rows.map(Object.values)]),
       );
