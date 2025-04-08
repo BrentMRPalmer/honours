@@ -80,6 +80,8 @@ const execRedisEval = (
       } else {
         // On Mac/Unix, this works fine
         command = `redis-cli -u "${connectionUri}" --raw --eval '${tempFile}' 0`;
+        
+        // Add each argument individually
         if (args.length > 0) {
           command += ' ' + args.join(' ');
         }
@@ -277,19 +279,22 @@ return cjson.encode({ key = "${key}", value = v })
     // Parse command and arguments properly handling quoted strings
     // This regex splits by spaces but keeps quoted strings together
     const parseCommand = (input: string) => {
-      const regex = /("[^"]*"|\S+)/g;
+      const regex = /("[^"]*"|'[^']*'|\S+)/g;
       const matches = [];
       let match;
-      
+    
       while ((match = regex.exec(input)) !== null) {
-        // Remove surrounding quotes but keep the content
         let arg = match[0];
-        if (arg.startsWith('"') && arg.endsWith('"')) {
+        // Remove surrounding quotes if present (either double or single)
+        if (
+          (arg.startsWith('"') && arg.endsWith('"')) ||
+          (arg.startsWith("'") && arg.endsWith("'"))
+        ) {
           arg = arg.slice(1, -1);
         }
         matches.push(arg);
       }
-      
+    
       return matches;
     };
     
@@ -419,7 +424,7 @@ return "OK"`;
 local keys = redis.call("KEYS", "*")
 table.sort(keys)
 local offset = tonumber(ARGV[1]) or 0
-local limit = tonumber(ARGV[2]) or 10
+local limit = tonumber(ARGV[2]) or 400
 local result = {}
 for i = offset+1, math.min(offset+limit, #keys) do
   local k = keys[i]
