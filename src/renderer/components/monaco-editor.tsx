@@ -35,7 +35,6 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
   
   // Use a local ref to check if editor has been mounted
   const isMountedRef = useRef(false);
-  const [value, setValue] = useState(starterCode[connectionLanguage]);
   
   // Store the container div reference
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,11 +74,6 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
       if (editorRef) {
         editorRef.current = monacoEditor;
       }
-      
-      // Set up value change listener
-      monacoEditor.onDidChangeModelContent(() => {
-        setValue(monacoEditor.getValue());
-      });
       
       // Position cursor and focus
       monacoEditor.setPosition({
