@@ -45,6 +45,7 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
     import('monaco-editor').then(monaco => {
       if (!containerRef.current) return;
       
+      // Create a model with the starter code
       const model = monaco.editor.createModel(
         starterCode[connectionLanguage],
         connectionLanguage
@@ -65,6 +66,7 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
         editorRef.current = monacoEditor;
       }
       
+      // Set the initial position of the cursor
       monacoEditor.setPosition({
         lineNumber: 1,
         column: starterCode[connectionLanguage].length + 1
