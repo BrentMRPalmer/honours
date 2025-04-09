@@ -18,11 +18,52 @@ class SqliteConnection extends AbstractConnection<Database> {
   }
 
   async query<T extends object>(query: string) {
-    const statement = this.db.prepare<[], T>(query);
-    const rows = statement.all();
-    const columns = statement.columns().map((c) => c.column) as (keyof T)[];
-
-    return { rows, columns };
+    try {
+      // Detect if this is a read query (SELECT, PRAGMA, etc.) or a write query (INSERT, UPDATE, etc.)
+      const isReadQuery = /^\s*(SELECT|PRAGMA|EXPLAIN|WITH)\s/i.test(query);
+      
+      if (isReadQuery) {
+        // For SELECT and similar queries
+        const statement = this.db.prepare<[], T>(query);
+        const rows = statement.all();
+        const columns = statement.columns().map((c) => c.column) as (keyof T)[];
+        return { rows, columns };
+      } else {
+        // For INSERT, CREATE, UPDATE, DELETE, etc.
+        const statement = this.db.prepare(query);
+        const result = statement.run();
+        
+        // Determine which information to show based on the query type
+        const isInsert = /^\s*(INSERT)\s/i.test(query);
+        
+        if (isInsert && result.lastInsertRowid) {
+          // For INSERT operations with lastInsertRowid
+          return { 
+            rows: [{ 
+              changes: result.changes,
+              lastInsertRowid: result.lastInsertRowid 
+            } as unknown as T], 
+            columns: ['changes', 'lastInsertRowid'] as Array<keyof T>
+          };
+        } else {
+          // For other write operations (CREATE, UPDATE, DELETE)
+          return { 
+            rows: [{ 
+              changes: result.changes,
+              message: `Operation completed successfully (${result.changes} ${result.changes === 1 ? 'row' : 'rows'} affected)`
+            } as unknown as T], 
+            columns: ['changes', 'message'] as Array<keyof T>
+          };
+        }
+      }
+    } catch (error) {
+      // Return SQL errors in a standard format
+      console.error("SQLite query error:", error);
+      return {
+        rows: [{ error: error.message } as unknown as T],
+        columns: ['error'] as Array<keyof T>
+      };
+    }
   }
 
   async getTables() {
