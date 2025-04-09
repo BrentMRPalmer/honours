@@ -9,6 +9,7 @@ import { editor } from 'monaco-editor';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
 import { QueryResult } from '@/common/types';
 import { useEffect, useState } from 'react';
+import { KeyCode } from 'monaco-editor';
 
 interface EditorToolbarInputProps {
   editorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
@@ -68,56 +69,96 @@ const EditorToolbar = ({
   };
 
   const runLine = async () => {
-    // Return if there is no current editor
-    if (!editorRef.current) return;
+    const dbType = connection.connectionDriver;
 
-    // Get the model for the current editor, allowing for accessing the text
-    const editorModel = editorRef.current.getModel();
-    if (!editorModel) return;
+    if (dbType === "sqlite"){
+      // Return if there is no current editor
+      if (!editorRef.current) return;
 
-    // Extract the current line the cursor is on
-    const currentPosition = editorRef.current.getPosition();
-    if (!currentPosition) return;
+      // Get the model for the current editor, allowing for accessing the text
+      const editorModel = editorRef.current.getModel();
+      if (!editorModel) return;
 
-    // Find the row and column of the previous delimiter
-    let startRow = currentPosition.lineNumber;
-    let prevDelimIndex = -1;
+      // Extract the current line the cursor is on
+      const currentPosition = editorRef.current.getPosition();
+      if (!currentPosition) return;
 
-    while (prevDelimIndex === -1 && startRow >= 2) {
-      startRow--;
+      // Find the row and column of the previous delimiter
+      let startRow = currentPosition.lineNumber;
+      let prevDelimIndex = -1;
+      
+      // Find the last ";" in the current line before the cursor
+      let currentColumn = currentPosition.column;
       let currentLine = editorModel.getLineContent(startRow);
-      prevDelimIndex = currentLine.lastIndexOf(';');
+      console.log(currentLine.substring(0, currentColumn - 1))
+      prevDelimIndex = currentLine.substring(0, currentColumn - 1).lastIndexOf(';');
+      console.log(prevDelimIndex)
+
+      while (prevDelimIndex === -1 && startRow >= 2) {
+        startRow--;
+        currentLine = editorModel.getLineContent(startRow);
+        prevDelimIndex = currentLine.lastIndexOf(';');
+      }
+      const startCol = prevDelimIndex + 2;
+      console.log('start row: ' + startRow + ' start column: ' + startCol);
+
+      // Find the row and column of the next delimiter
+      let endRow = currentPosition.lineNumber;
+      let endDelimIndex = -1;
+
+      // Find the first ";" in the current line after the cursor
+      currentColumn = currentPosition.column;
+      currentLine = editorModel.getLineContent(endRow);
+      endDelimIndex = currentLine.substring(currentColumn - 1).indexOf(';');
+
+      if (endDelimIndex !== -1 ){
+        endDelimIndex = endDelimIndex + currentColumn - 1;
+      }
+      console.log(endDelimIndex)
+
+      while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1) {
+        endRow++;
+        let currentLine = editorModel.getLineContent(endRow);
+        endDelimIndex = currentLine.indexOf(';');
+      }
+      const endCol =
+        endDelimIndex === -1
+          ? editorModel.getLineLength(editorModel.getLineCount()) + 1
+          : endDelimIndex + 1;
+      console.log('end row: ' + endRow + ' end column: ' + endCol);
+
+      // Extact the text for the current line's query
+      const sourceCode = editorModel.getValueInRange({
+        startLineNumber: startRow,
+        startColumn: startCol,
+        endLineNumber: endRow,
+        endColumn: endCol,
+      });
+      if (!sourceCode) return;
+      console.log(sourceCode);
+
+      // Execute the query, returning a promise
+      setQueryResult(connection.query(sourceCode));
+    } else {
+      // Return if there is no current editor
+      if (!editorRef.current) return;
+
+      // Get the model for the current editor, allowing for accessing the text
+      const editorModel = editorRef.current.getModel();
+      if (!editorModel) return;
+
+      // Extract the current line the cursor is on
+      const currentLine = editorRef.current.getPosition()?.lineNumber;
+      if (!currentLine) return;
+
+      // Extract the query on the current line
+      const sourceCode = editorModel.getLineContent(currentLine)
+      if (!sourceCode) return;
+      console.log(sourceCode)
+
+      // Execute the query, returning a promise
+      setQueryResult(connection.query(sourceCode));
     }
-    const startCol = prevDelimIndex + 2;
-    console.log('start row: ' + startRow + ' start column: ' + startCol);
-
-    // Find the row and column of the next delimiter
-    let endRow = currentPosition.lineNumber - 1;
-    let endDelimIndex = -1;
-
-    while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1) {
-      endRow++;
-      let currentLine = editorModel.getLineContent(endRow);
-      endDelimIndex = currentLine.lastIndexOf(';');
-    }
-    const endCol =
-      endDelimIndex === -1
-        ? editorModel.getLineLength(editorModel.getLineCount()) + 1
-        : endDelimIndex + 1;
-    console.log('end row: ' + endRow + ' end column: ' + endCol);
-
-    // Extact the text for the current line's query
-    const sourceCode = editorModel.getValueInRange({
-      startLineNumber: startRow,
-      startColumn: startCol,
-      endLineNumber: endRow,
-      endColumn: endCol,
-    });
-    if (!sourceCode) return;
-    console.log(sourceCode);
-
-    // Execute the query, returning a promise
-    setQueryResult(connection.query(sourceCode));
   };
 
   const runSelection = async () => {
@@ -140,6 +181,38 @@ const EditorToolbar = ({
     setQueryResult(connection.query(sourceCode));
   };
 
+  useEffect(() => {
+    if (!editorRef.current) return;
+    const editorInstance = editorRef.current;
+  
+    const disposable = editorInstance.onKeyDown((e) => {
+      // Run Query: Ctrl/Cmd+Enter
+      if ((e.ctrlKey || e.metaKey) && e.keyCode === KeyCode.Enter && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        runQuery();
+      }
+
+      // Run Current Line: Shift+Enter
+      else if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && e.keyCode === KeyCode.Enter) {
+        e.preventDefault();
+        e.stopPropagation();
+        runLine();
+      }
+
+      // Run Highlighted Text: Ctrl/Cmd+Shift+Enter
+      else if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.keyCode === KeyCode.Enter) {
+        e.preventDefault();
+        e.stopPropagation();
+        runSelection();
+      }
+    });
+  
+    return () => {
+      disposable.dispose();
+    };
+  }, [editorRef, runQuery, runLine, runSelection]);
+
   return (
     <div className='mt-2 mr-3 mb-2 flex justify-end'>
       <Tooltip>
@@ -158,7 +231,7 @@ const EditorToolbar = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-medium'>Execute Query (Ctrl+Enter)</span>
+          <span className='font-medium'>Execute Query (Ctrl/Cmd+Enter)</span>
         </TooltipContent>
       </Tooltip>
 
@@ -175,7 +248,7 @@ const EditorToolbar = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-medium'>Run Current Line</span>
+          <span className='font-medium'>Run Current Line (Shift+Enter)</span>
         </TooltipContent>
       </Tooltip>
 
@@ -192,7 +265,7 @@ const EditorToolbar = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-medium'>Run Highlighted Query</span>
+          <span className='font-medium'>Run Highlighted Query (Ctrl/Cmd+Shift+Enter)</span>
         </TooltipContent>
       </Tooltip>
     </div>

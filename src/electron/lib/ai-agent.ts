@@ -10,15 +10,24 @@ Settings.callbackManager.on('llm-tool-result', (event) => {
   console.log(event.detail);
 });
 
-function createSqlAgent(
+function createAiAgent(
   connection: AbstractConnection<unknown>,
   selectedModel: string,
+  baseSystemPrompt: string,
+  customSystemPrompt: string
 ) {
+
+  // Concatenate the base prompt and the custom system prompt
+  const systemPrompt = `${baseSystemPrompt}\n\n${customSystemPrompt}`.trim();
+  console.log("System prompt:");
+  console.log(systemPrompt);
+
   // Instantiate the LLM for the agent
   const llm = new OpenAI({
     apiKey: process.env['OPENROUTER_API_KEY'] as string,
     baseURL: 'https://openrouter.ai/api/v1',
     model: selectedModel,
+    temperature: 0.0
   });
 
   async function runQuery({ query }: { query: string }) {
@@ -60,13 +69,13 @@ function createSqlAgent(
   const runQueryTool = FunctionTool.from(runQuery, {
     name: 'runQuery',
     description:
-      'Executes a sql query against the database and returns the result',
+      'Executes a query against the database and returns the result',
     parameters: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'The SQL query to execute',
+          description: 'The query to execute',
         },
       },
       required: ['query'],
@@ -120,62 +129,7 @@ function createSqlAgent(
     getTableFirst5RowsTool,
   ];
 
-  const systemPrompt = `
-    You are an SQL expert who answers questions using data from your database. When querying the database
-    make sure to understand the tables within the database first by viewing the structure of the first 5 
-    columns, along with checking the table schemas within the database. Make sure the casing of your strings
-    match the same casing within the database.
-
-    Use the following data for how grading works to determine averages. Letter grades with empty numeric 
-    column does not contribute to GPA:
-
-    | Letter Grade | Numeric Value |
-    | ------------ | ------------- |
-    | A+           | 10            |
-    | A            | 9             |
-    | A-           | 8             |
-    | B+           | 7             |
-    | B            | 6             |
-    | C+           | 5             |
-    | C            | 4             |
-    | D+           | 3             |
-    | D            | 2             |
-    | E            | 1             |
-    | F            | 0             |
-    | ABS          | 0             |
-    | EIN          | 0             |
-    | CR           |               |
-    | NC           |               |
-    | P            |               |
-    | S            |               |
-    | NS           |               |
-
-    The following python code is used to generate the term id:
-
-    \`\`\`python
-    def term_id(year, season):
-      season_id = {"winter": 0, "summer": 1, "fall": 2}
-      return (year * 10) + season_id
-
-    term_id(2022, "winter")   # 20220
-    term_id(2017, "fall")     # 20172
-    term_id(2019, "summer")   # 20191
-    \`\`\`
-
-    The following python code is used to get what year the course is for:
-
-    \`\`\`python
-    def course_year(course):
-      return course['code'].replace(course['subject_code'], '')[0]
-
-    course_year({"code": "CSI2101", "subject_code": "CSI"})   # 2
-    course_year({"code": "PSY1101", "subject_code": "PSY"})   # 1
-    course_year({"code": "MAT4130", "subject_code": "MAT"})   # 4
-    course_year({"code": "ECO3020", "subject_code": "ECO"})   # 3
-    \`\`\`
-  `.trim();
-
   return new OpenAIAgent({ llm, systemPrompt, tools });
 }
 
-export { createSqlAgent };
+export { createAiAgent };
