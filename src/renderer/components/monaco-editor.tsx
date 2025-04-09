@@ -16,7 +16,7 @@ const dbTypes: Record<ConnectionDriver, Language> = {
   postgresql: 'sql',
   mysql: 'sql',
   maria: 'sql',
-  mongo: 'javascript',
+  mongo: 'plaintext',
   redis: 'plaintext',
 };
 

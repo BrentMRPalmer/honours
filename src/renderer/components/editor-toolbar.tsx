@@ -23,6 +23,7 @@ const EditorToolbar = ({
   setQueryResult,
 }: EditorToolbarInputProps) => {
   const { connection } = useConnectionViewContext();
+  const dbType = connection.connectionDriver;
   const [hasContent, setHasContent] = useState(false);
 
   // Check if the editor has user-entered content
@@ -69,56 +70,77 @@ const EditorToolbar = ({
   };
 
   const runLine = async () => {
-    // Return if there is no current editor
-    if (!editorRef.current) return;
+    if (dbType === "sqlite"){
+      // Return if there is no current editor
+      if (!editorRef.current) return;
 
-    // Get the model for the current editor, allowing for accessing the text
-    const editorModel = editorRef.current.getModel();
-    if (!editorModel) return;
+      // Get the model for the current editor, allowing for accessing the text
+      const editorModel = editorRef.current.getModel();
+      if (!editorModel) return;
 
-    // Extract the current line the cursor is on
-    const currentPosition = editorRef.current.getPosition();
-    if (!currentPosition) return;
+      // Extract the current line the cursor is on
+      const currentPosition = editorRef.current.getPosition();
+      if (!currentPosition) return;
 
-    // Find the row and column of the previous delimiter
-    let startRow = currentPosition.lineNumber;
-    let prevDelimIndex = -1;
+      // Find the row and column of the previous delimiter
+      let startRow = currentPosition.lineNumber;
+      let prevDelimIndex = -1;
 
-    while (prevDelimIndex === -1 && startRow >= 2) {
-      startRow--;
-      let currentLine = editorModel.getLineContent(startRow);
-      prevDelimIndex = currentLine.lastIndexOf(';');
+      while (prevDelimIndex === -1 && startRow >= 2) {
+        startRow--;
+        let currentLine = editorModel.getLineContent(startRow);
+        prevDelimIndex = currentLine.lastIndexOf(';');
+      }
+      const startCol = prevDelimIndex + 2;
+      console.log('start row: ' + startRow + ' start column: ' + startCol);
+
+      // Find the row and column of the next delimiter
+      let endRow = currentPosition.lineNumber - 1;
+      let endDelimIndex = -1;
+
+      while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1) {
+        endRow++;
+        let currentLine = editorModel.getLineContent(endRow);
+        endDelimIndex = currentLine.lastIndexOf(';');
+      }
+      const endCol =
+        endDelimIndex === -1
+          ? editorModel.getLineLength(editorModel.getLineCount()) + 1
+          : endDelimIndex + 1;
+      console.log('end row: ' + endRow + ' end column: ' + endCol);
+
+      // Extact the text for the current line's query
+      const sourceCode = editorModel.getValueInRange({
+        startLineNumber: startRow,
+        startColumn: startCol,
+        endLineNumber: endRow,
+        endColumn: endCol,
+      });
+      if (!sourceCode) return;
+      console.log(sourceCode);
+
+      // Execute the query, returning a promise
+      setQueryResult(connection.query(sourceCode));
+    } else {
+      // Return if there is no current editor
+      if (!editorRef.current) return;
+
+      // Get the model for the current editor, allowing for accessing the text
+      const editorModel = editorRef.current.getModel();
+      if (!editorModel) return;
+
+      // Extract the current line the cursor is on
+      const currentLine = editorRef.current.getPosition()?.lineNumber;
+      if (!currentLine) return;
+
+      // Extract the query on the current line
+      const sourceCode = editorModel.getLineContent(currentLine)
+      if (!sourceCode) return;
+      console.log(sourceCode)
+
+      // Execute the query, returning a promise
+      setQueryResult(connection.query(sourceCode));
     }
-    const startCol = prevDelimIndex + 2;
-    console.log('start row: ' + startRow + ' start column: ' + startCol);
-
-    // Find the row and column of the next delimiter
-    let endRow = currentPosition.lineNumber - 1;
-    let endDelimIndex = -1;
-
-    while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1) {
-      endRow++;
-      let currentLine = editorModel.getLineContent(endRow);
-      endDelimIndex = currentLine.lastIndexOf(';');
-    }
-    const endCol =
-      endDelimIndex === -1
-        ? editorModel.getLineLength(editorModel.getLineCount()) + 1
-        : endDelimIndex + 1;
-    console.log('end row: ' + endRow + ' end column: ' + endCol);
-
-    // Extact the text for the current line's query
-    const sourceCode = editorModel.getValueInRange({
-      startLineNumber: startRow,
-      startColumn: startCol,
-      endLineNumber: endRow,
-      endColumn: endCol,
-    });
-    if (!sourceCode) return;
-    console.log(sourceCode);
-
-    // Execute the query, returning a promise
-    setQueryResult(connection.query(sourceCode));
   };
 
   const runSelection = async () => {
