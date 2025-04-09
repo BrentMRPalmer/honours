@@ -23,7 +23,6 @@ const EditorToolbar = ({
   setQueryResult,
 }: EditorToolbarInputProps) => {
   const { connection } = useConnectionViewContext();
-  const dbType = connection.connectionDriver;
   const [hasContent, setHasContent] = useState(false);
 
   // Check if the editor has user-entered content
@@ -70,6 +69,8 @@ const EditorToolbar = ({
   };
 
   const runLine = async () => {
+    const dbType = connection.connectionDriver;
+
     if (dbType === "sqlite"){
       // Return if there is no current editor
       if (!editorRef.current) return;
@@ -85,23 +86,40 @@ const EditorToolbar = ({
       // Find the row and column of the previous delimiter
       let startRow = currentPosition.lineNumber;
       let prevDelimIndex = -1;
+      
+      // Find the last ";" in the current line before the cursor
+      let currentColumn = currentPosition.column;
+      let currentLine = editorModel.getLineContent(startRow);
+      console.log(currentLine.substring(0, currentColumn - 1))
+      prevDelimIndex = currentLine.substring(0, currentColumn - 1).lastIndexOf(';');
+      console.log(prevDelimIndex)
 
       while (prevDelimIndex === -1 && startRow >= 2) {
         startRow--;
-        let currentLine = editorModel.getLineContent(startRow);
+        currentLine = editorModel.getLineContent(startRow);
         prevDelimIndex = currentLine.lastIndexOf(';');
       }
       const startCol = prevDelimIndex + 2;
       console.log('start row: ' + startRow + ' start column: ' + startCol);
 
       // Find the row and column of the next delimiter
-      let endRow = currentPosition.lineNumber - 1;
+      let endRow = currentPosition.lineNumber;
       let endDelimIndex = -1;
+
+      // Find the first ";" in the current line after the cursor
+      currentColumn = currentPosition.column;
+      currentLine = editorModel.getLineContent(endRow);
+      endDelimIndex = currentLine.substring(currentColumn - 1).indexOf(';');
+
+      if (endDelimIndex !== -1 ){
+        endDelimIndex = endDelimIndex + currentColumn - 1;
+      }
+      console.log(endDelimIndex)
 
       while (endDelimIndex === -1 && endRow <= editorModel.getLineCount() - 1) {
         endRow++;
         let currentLine = editorModel.getLineContent(endRow);
-        endDelimIndex = currentLine.lastIndexOf(';');
+        endDelimIndex = currentLine.indexOf(';');
       }
       const endCol =
         endDelimIndex === -1
