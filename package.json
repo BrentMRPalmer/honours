@@ -34,6 +34,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "llamaindex": "^0.9.9",
     "lucide-react": "^0.475.0",
+    "mariadb": "^3.4.1",
     "pg": "^8.13.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

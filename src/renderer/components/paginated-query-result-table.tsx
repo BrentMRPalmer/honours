@@ -23,7 +23,7 @@ function PaginatedQueryResultTable({
   };
 
   useEffect(() => {
-    connection.getTableCount(table).then((count) => setTableCount(count));
+    connection.getTableCount(table).then((count) => setTableCount(Number(count)));
   }, []);
 
   if (tableCount === undefined) return;
