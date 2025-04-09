@@ -63,12 +63,15 @@ function ConnectionViewMain() {
       <TabsList className='border-b-0'>
         {tabManager.tabs.length > 0 && (
           <SortableList
-            onSortEnd={(oldI, newI) =>
-              tabManager.swapTabs(
-                tabManager.tabs[oldI].id,
-                tabManager.tabs[newI].id,
-              )
-            }
+            onSortEnd={(oldI, newI) => {
+              // Don't reorder if no change (prevents unnecessary editor recreation)
+              if (oldI !== newI) {
+                tabManager.swapTabs(
+                  tabManager.tabs[oldI].id,
+                  tabManager.tabs[newI].id,
+                );
+              }
+            }}
             lockAxis='x'
             className='scrollbar-thin flex overflow-x-auto'
             allowDrag={tabManager.tabs.length > 1}
@@ -112,7 +115,10 @@ function ConnectionViewMain() {
           className='flex-grow overflow-hidden data-[state=inactive]:hidden'
           forceMount
         >
-          {component}
+          {/* Wrap component in a div to maintain a stable render tree */}
+          <div className="h-full">
+            {component}
+          </div>
         </TabsContent>
       ))}
 
