@@ -24,7 +24,9 @@ function EditorContainer() {
         </Allotment.Pane>
         <Allotment.Pane minSize={100}>
           {queryResult ? (
-            <QueryResultTable query={queryResult} />
+            <div className='flex-1 overflow-hidden'>
+              <QueryResultTable query={queryResult} />
+            </div>
           ) : (
             <div className='bg-secondary/20 m-4 flex h-full flex-col items-center justify-center rounded-md'>
               <div className='max-w-md px-6 py-8 text-center'>
