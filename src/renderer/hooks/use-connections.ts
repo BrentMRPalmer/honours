@@ -20,6 +20,7 @@ interface UseConnections {
     config: unknown,
   ) => Promise<void>;
   deleteConnection: (id: string) => Promise<void>;
+  reorderConnections: (oldIndex: number, newIndex: number) => void;
   testConnection: (
     driver: ConnectionDriver,
     config: unknown,
@@ -142,6 +143,29 @@ const useConnections = create<UseConnections>()((set, get) => ({
           error instanceof Error ? error.message : 'Connection test failed',
       };
     }
+  },
+  
+  reorderConnections(oldIndex: number, newIndex: number) {
+    // If indices are the same, do nothing
+    if (oldIndex === newIndex) return;
+    
+    set(state => {
+      // Create a copy of the connections array
+      const updatedConnections = [...state.connections];
+      
+      // Remove connection from old position
+      const [movedConnection] = updatedConnections.splice(oldIndex, 1);
+      
+      // Insert at new position
+      updatedConnections.splice(newIndex, 0, movedConnection);
+      
+      // Return updated state
+      return { connections: updatedConnections };
+    });
+
+    // If we had a backend that needed to store connection order,
+    // we would persist the changes here
+    // Since order is only maintained in the frontend state, no persistence is needed
   },
 }));
 
