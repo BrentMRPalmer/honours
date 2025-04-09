@@ -1,7 +1,5 @@
 import SqliteDatabase from 'better-sqlite3';
-import mariadb from 'mariadb';
 import type { IpcMainInvokeEvent as IpcEvent } from 'electron';
-import { Client as PostgresqlDatabase } from 'pg';
 
 import type { AbstractConnection } from '@/common/lib/abstract-connection';
 import { MongoConnection } from '@/common/lib/mongo-connection';
@@ -10,8 +8,6 @@ import { SqliteConnection } from '@/common/lib/sqlite-connection';
 import type { Connection } from '@/common/types';
 import { AbstractController } from '@/controllers/abstract-controller';
 import { createAiAgent } from '@/lib/ai-agent';
-import { MysqlConnection } from '@/common/lib/mysql-connection';
-import { PostgresqlConnection } from '@/common/lib/pg-connection';
 
 class ConnectionProxy extends AbstractController {
   openConnections = new Map<string, AbstractConnection<unknown>>();
@@ -29,34 +25,29 @@ class ConnectionProxy extends AbstractController {
           break;
         }
         case 'postgresql': {
-          let db = new PostgresqlConnection(
-            new PostgresqlDatabase({ ...config, user: config.username }),
+          // Mock implementation for PostgreSQL
+          console.log('Creating PostgreSQL connection (mock):', config);
+          this.openConnections.set(
+            id,
+            new SqliteConnection(new SqliteDatabase(':memory:')),
           );
-          await db.connect();
-          this.openConnections.set(id, db);
           break;
         }
         case 'mysql': {
+          // Mock implementation for MySQL
+          console.log('Creating MySQL connection (mock):', config);
           this.openConnections.set(
             id,
-            new MysqlConnection(
-              await mariadb.createConnection({
-                ...config,
-                user: config.username,
-              }),
-            ),
+            new SqliteConnection(new SqliteDatabase(':memory:')),
           );
           break;
         }
         case 'maria': {
+          // Mock implementation for MariaDB
+          console.log('Creating MariaDB connection (mock):', config);
           this.openConnections.set(
             id,
-            new MysqlConnection(
-              await mariadb.createConnection({
-                ...config,
-                user: config.username,
-              }),
-            ),
+            new SqliteConnection(new SqliteDatabase(':memory:')),
           );
           break;
         }

@@ -17,7 +17,7 @@ function PaginatedQueryResultTable({
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    connection.getTableCount(table).then((count) => setTableCount(Number(count)));
+    connection.getTableCount(table).then((count) => setTableCount(count));
   }, []);
 
   if (tableCount === undefined) return;
