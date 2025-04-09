@@ -15,6 +15,12 @@ function PaginatedQueryResultTable({
 }: PaginatedQueryResultTableProps) {
   const [tableCount, setTableCount] = useState<number>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshData = () => {
+    connection.getTableCount(table).then((count) => setTableCount(count));
+    setRefreshKey(prev => prev + 1);
+  };
 
   useEffect(() => {
     connection.getTableCount(table).then((count) => setTableCount(count));
@@ -43,13 +49,21 @@ function PaginatedQueryResultTable({
     <div className='flex h-full w-full flex-col'>
       <div className='flex-1 overflow-hidden'>
         <QueryResultTable
+          key={refreshKey}
           query={connection.getPaginatedTableData(table, currentPage, 400)}
         />
       </div>
 
       <div className='border-border border-t p-2'>
         <div className='flex items-center justify-between text-sm'>
-          <div>
+          <div className='flex items-center gap-2'>
+            <Button 
+              size='sm'
+              variant='outline'
+              onClick={refreshData}
+            >
+              Refresh
+            </Button>
             {tableCount > 0
               ? `Showing ${startIdx}-${endIdx} of ${tableCount} results`
               : 'No results'}

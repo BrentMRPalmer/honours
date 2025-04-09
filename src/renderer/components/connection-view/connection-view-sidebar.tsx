@@ -1,6 +1,6 @@
 import { Portal } from '@radix-ui/react-portal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@radix-ui/react-tabs';
-import { BotIcon, SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
+import { BotIcon, RefreshCwIcon, SheetIcon, SquarePenIcon, Table2Icon } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { Chat } from '@/components/chat';
@@ -22,10 +22,27 @@ function ConnectionViewSidebar() {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [tables, setTables] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useLayoutEffect(() => {
     setIsVisible(ref.current?.offsetParent !== null);
   });
+
+  // Function to refresh all tables in the connection
+  const refreshTables = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
+      // Fetch updated tables list
+      const updatedTables = await connection.getTables();
+      setTables(updatedTables);
+    } catch (error) {
+      console.error('Error refreshing tables:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Get tables from the current connection
   useEffect(() => {
@@ -127,9 +144,27 @@ function ConnectionViewSidebar() {
         value='tables'
         className='flex h-full flex-col gap-2 overflow-y-auto px-3 py-2'
       >
-        <h3 className='text-muted-foreground mb-2 px-1 text-sm font-medium tracking-wider uppercase'>
-          Tables
-        </h3>
+        <div className='flex items-center justify-between mb-2'>
+          <h3 className='text-muted-foreground px-1 text-sm font-medium tracking-wider uppercase'>
+            Tables
+          </h3>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant='ghost' 
+                size='sm'
+                onClick={refreshTables}
+                disabled={isRefreshing}
+                className='h-5 w-5 p-0'
+              >
+                <RefreshCwIcon size={12} strokeWidth={1.5} className={cn(isRefreshing && 'animate-spin')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side='right'>
+              <span className='font-medium'>Refresh Tables</span>
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         {tables.map((table) => (
           <div
