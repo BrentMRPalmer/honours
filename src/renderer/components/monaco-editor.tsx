@@ -1,6 +1,5 @@
-import Editor from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
 import { ConnectionDriver } from '@/common/types';
 
@@ -10,6 +9,8 @@ interface MonacoEditorInputProps {
   editorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
 }
 
+// Use a record to establish which query highlighting syntax should
+// be used depending on the current database type
 const dbTypes: Record<ConnectionDriver, Language> = {
   sqlite: 'sql',
   postgresql: 'sql',
@@ -19,6 +20,7 @@ const dbTypes: Record<ConnectionDriver, Language> = {
   redis: 'plaintext',
 };
 
+// Use a record to establish starter code for each type of highlighting syntax
 const starterCode: Record<Language, string> = {
   sql: `-- Type your query here`,
   javascript: `// Type your query here`,
@@ -26,12 +28,14 @@ const starterCode: Record<Language, string> = {
 };
 
 function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
+  // Get the current connection driver name
   const { connection } = useConnectionViewContext();
   const connectionType: ConnectionDriver = connection.connectionDriver;
+
+  // Extract the corresponding highlighting syntax from the record
   const connectionLanguage = dbTypes[connectionType];
   
   const isMountedRef = useRef(false);
-  
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -51,6 +55,8 @@ function MonacoEditor({ editorRef }: MonacoEditorInputProps) {
         connectionLanguage
       );
       
+
+      // Load the editor into the container, and store a reference to the editor
       const monacoEditor = monaco.editor.create(containerRef.current, {
         model,
         automaticLayout: true,
