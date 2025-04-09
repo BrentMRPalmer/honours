@@ -9,6 +9,7 @@ import { editor } from 'monaco-editor';
 import { useConnectionViewContext } from './connection-view/connection-view-provider';
 import { QueryResult } from '@/common/types';
 import { useEffect, useState } from 'react';
+import { KeyCode } from 'monaco-editor';
 
 interface EditorToolbarInputProps {
   editorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
@@ -140,6 +141,38 @@ const EditorToolbar = ({
     setQueryResult(connection.query(sourceCode));
   };
 
+  useEffect(() => {
+    if (!editorRef.current) return;
+    const editorInstance = editorRef.current;
+  
+    const disposable = editorInstance.onKeyDown((e) => {
+      // Run Query: Ctrl/Cmd+Enter
+      if ((e.ctrlKey || e.metaKey) && e.keyCode === KeyCode.Enter && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        runQuery();
+      }
+
+      // Run Current Line: Shift+Enter
+      else if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey && e.keyCode === KeyCode.Enter) {
+        e.preventDefault();
+        e.stopPropagation();
+        runLine();
+      }
+
+      // Run Highlighted Text: Ctrl/Cmd+Shift+Enter
+      else if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.keyCode === KeyCode.Enter) {
+        e.preventDefault();
+        e.stopPropagation();
+        runSelection();
+      }
+    });
+  
+    return () => {
+      disposable.dispose();
+    };
+  }, [editorRef, runQuery, runLine, runSelection]);
+
   return (
     <div className='mt-2 mr-3 mb-2 flex justify-end'>
       <Tooltip>
@@ -158,7 +191,7 @@ const EditorToolbar = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-medium'>Execute Query (Ctrl+Enter)</span>
+          <span className='font-medium'>Execute Query (Ctrl/Cmd+Enter)</span>
         </TooltipContent>
       </Tooltip>
 
@@ -175,7 +208,7 @@ const EditorToolbar = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-medium'>Run Current Line</span>
+          <span className='font-medium'>Run Current Line (Shift+Enter)</span>
         </TooltipContent>
       </Tooltip>
 
@@ -192,7 +225,7 @@ const EditorToolbar = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={2}>
-          <span className='font-medium'>Run Highlighted Query</span>
+          <span className='font-medium'>Run Highlighted Query (Ctrl/Cmd+Shift+Enter)</span>
         </TooltipContent>
       </Tooltip>
     </div>
