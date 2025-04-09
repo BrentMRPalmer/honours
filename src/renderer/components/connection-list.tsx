@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useConnections } from '@/hooks/use-connections';
 
 function ConnectionList() {
-  const { activeConnectionId, connections, changeConnection, getConnections } =
+  const { activeConnectionId, connections, changeConnection, getConnections, reorderConnections } =
     useConnections();
   const [showManage, setShowManage] = useState(false);
 
@@ -52,9 +52,19 @@ function ConnectionList() {
     >
       <TabsList className='relative h-full p-0'>
         <SortableList
-          onSortEnd={() => {}}
+          onSortEnd={(oldIndex, newIndex) => {
+            // Call the reorderConnections function to update the state
+            if (oldIndex !== newIndex) {
+              // First reorder
+              reorderConnections(oldIndex, newIndex);
+              
+              // Keep the active connection selected after reordering
+              // No need to change selection as it's based on ID, not position
+            }
+          }}
           lockAxis='y'
           className='flex min-w-20 flex-col gap-4 py-3 pr-2 pl-0'
+          draggedItemClassName="opacity-50"
         >
           {connections.map((connection) => (
             <SortableItem key={connection.id}>
