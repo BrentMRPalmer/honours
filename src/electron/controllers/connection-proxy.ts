@@ -29,31 +29,21 @@ class ConnectionProxy extends AbstractController {
           break;
         }
         case 'postgresql': {
-          let db = new PostgresqlConnection(
+          let a = new PostgresqlConnection(
             new PostgresqlDatabase({ ...config, user: config.username }),
           );
-          await db.connect();
-          this.openConnections.set(id, db);
+          await a.connect();
+          this.openConnections.set(id, a);
           break;
         }
-        case 'mysql': {
-          this.openConnections.set(
-            id,
-            new MysqlConnection(
-              await mariadb.createConnection({
-                ...config,
-                user: config.username,
-              }),
-            ),
-          );
-          break;
-        }
+        case 'mysql':
         case 'maria': {
           this.openConnections.set(
             id,
             new MysqlConnection(
               await mariadb.createConnection({
                 ...config,
+                allowPublicKeyRetrieval: true,
                 user: config.username,
               }),
             ),
@@ -156,7 +146,14 @@ class ConnectionProxy extends AbstractController {
     }
   }
 
-  async agent(_: IpcEvent, id: string, query: string, selectedModel: string, baseSystemPrompt: string, customSystemPrompt: string) {
+  async agent(
+    _: IpcEvent,
+    id: string,
+    query: string,
+    selectedModel: string,
+    baseSystemPrompt: string,
+    customSystemPrompt: string,
+  ) {
     const connection = this.openConnections.get(id);
 
     if (!connection) {
@@ -164,7 +161,12 @@ class ConnectionProxy extends AbstractController {
     }
 
     try {
-      const a = createAiAgent(connection, selectedModel, baseSystemPrompt, customSystemPrompt);
+      const a = createAiAgent(
+        connection,
+        selectedModel,
+        baseSystemPrompt,
+        customSystemPrompt,
+      );
       return (await a.chat({ message: query })).message.content;
     } catch (error) {
       console.error(`Error using agent on connection ${id}:`, error);

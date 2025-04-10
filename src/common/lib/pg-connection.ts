@@ -17,12 +17,30 @@ class PostgresqlConnection extends AbstractConnection<PostgresqlDatabase> {
   }
 
   async query<T extends object>(query: string) {
-    const result = await this.db.query<T>(query);
+    try {
+      // Detect if this is a read query (SELECT, PRAGMA, etc.) or a write query (INSERT, UPDATE, etc.)
+      const isReadQuery = /^\s*(SELECT|PRAGMA|EXPLAIN|WITH)\s/i.test(query);
+      const result = await this.db.query<T>(query);
 
-    return {
-      rows: result.rows,
-      columns: result.fields.map(({ name }) => name) as (keyof T)[],
-    };
+      if (isReadQuery) {
+        return {
+          rows: result.rows,
+          columns: result.fields.map(({ name }) => name) as (keyof T)[],
+        };
+      } else {
+        return {
+          rows: [{ affectedRows: result.rowCount }],
+          columns: ['affectedRows'],
+        };
+      }
+    } catch (error) {
+      // Return SQL errors in a standard format
+      console.error('SQLite query error:', error);
+      return {
+        rows: [{ error: error.message } as unknown as T],
+        columns: ['error'] as Array<keyof T>,
+      };
+    }
   }
 
   async getTables() {
@@ -33,7 +51,9 @@ class PostgresqlConnection extends AbstractConnection<PostgresqlDatabase> {
   }
 
   async getTableSchema(table: string) {
-    return this.query(`SELECT * FROM information_schema.columns WHERE table_name = '${table}';`);
+    return this.query(
+      `SELECT * FROM information_schema.columns WHERE table_name = '${table}';`,
+    );
   }
 }
 

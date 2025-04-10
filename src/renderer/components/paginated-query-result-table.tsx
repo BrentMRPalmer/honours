@@ -18,7 +18,7 @@ function PaginatedQueryResultTable({
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refreshData = () => {
-    connection.getTableCount(table).then((count) => setTableCount(count));
+    connection.getTableCount(table).then((count) => setTableCount(Number(count)));
     setRefreshKey(prev => prev + 1);
   };
 

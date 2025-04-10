@@ -9,8 +9,7 @@ class MysqlConnection extends AbstractConnection<MariaDatabase> {
   }
 
   async connect() {
-    // Connection is opened when creating connection object
-    return Promise.resolve();
+    await this.db.ping();
   }
 
   async disconnect() {
@@ -18,8 +17,41 @@ class MysqlConnection extends AbstractConnection<MariaDatabase> {
   }
 
   async query<T extends object>(query: string) {
-    const result = await this.db.query<T[]>(query);
-    return { rows: result, columns: (result as any).meta.map((col: any) => col.name()) };
+    try {
+      // Detect if this is a read query (SELECT, PRAGMA, etc.) or a write query (INSERT, UPDATE, etc.)
+      const isReadQuery = /^\s*(SELECT|PRAGMA|EXPLAIN|WITH)\s/i.test(query);
+
+      if (isReadQuery) {
+        const result = await this.db.query<T[]>(query);
+        return {
+          rows: result,
+          columns: (result as any).meta.map((col: any) => col.name()),
+        };
+      } else {
+        // For INSERT, CREATE, UPDATE, DELETE, etc.
+        const result = await this.db.query<T[]>(query);
+
+        return {
+          rows: [
+            {
+              affectedRows: result.affectedRows,
+              insertId: result.insertId,
+              warningStatus: result.warningStatus,
+            } as unknown as T,
+          ],
+          columns: ['affectedRows', 'insertId', 'warningStatus'] as Array<
+            keyof T
+          >,
+        };
+      }
+    } catch (error) {
+      // Return SQL errors in a standard format
+      console.error('SQLite query error:', error);
+      return {
+        rows: [{ error: error.message } as unknown as T],
+        columns: ['error'] as Array<keyof T>,
+      };
+    }
   }
 
   async getTables() {
