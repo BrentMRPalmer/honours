@@ -162,7 +162,7 @@ function Chat() {
       >
         <div className='flex-1 overflow-y-auto'>
           <ChatMessages>
-            <ChatMessages.List className='space-y-4' />
+            <ChatMessages.List className='space-y-4 overflow-hidden' />
             <ChatMessages.Actions />
           </ChatMessages>
         </div>
