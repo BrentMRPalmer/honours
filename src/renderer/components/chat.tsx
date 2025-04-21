@@ -37,7 +37,7 @@ function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedModel, setSelectedModel] = useState('openrouter/quasar-alpha');
+  const [selectedModel, setSelectedModel] = useState('openai/gpt-4.1-mini');
   const [customSystemPrompt, setCustomSystemPrompt] = useState("");
   const [tempCustomPrompt, setTempCustomPrompt] = useState(customSystemPrompt);
 
@@ -95,11 +95,11 @@ function Chat() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='openrouter/quasar-alpha'>
-              Quasar Alpha
+            <SelectItem value='openai/gpt-4.1-mini'>
+              GPT-4.1 Mini
             </SelectItem>
             <SelectItem value='openai/gpt-4o-mini'>
-              GPT-4o mini
+              GPT-4o Mini
             </SelectItem>
             <SelectItem value='anthropic/claude-3.5-haiku'>
               Claude 3.5 Haiku

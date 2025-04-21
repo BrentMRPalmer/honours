@@ -22,7 +22,7 @@ function EditorContainer() {
           />
           <MonacoEditor editorRef={editorRef} />
         </Allotment.Pane>
-        <Allotment.Pane minSize={100}>
+        <Allotment.Pane minSize={100} className="flex flex-col">
           {queryResult ? (
             <div className='flex-1 overflow-hidden'>
               <QueryResultTable query={queryResult} />
